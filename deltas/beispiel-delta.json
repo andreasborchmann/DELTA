@@ -1,0 +1,29 @@
+{
+  "delta_id": "ULTRA-Δ-20260914-001",
+  "schema_version": "udp-1.0",
+  "target": {
+    "document": "ULTRA_DATA_SYS_DELTA-FORCE_0_2.md",
+    "section_heading": "### 2.1 Schicht-Architektur",
+    "context_hash": "sha256:ea22467958bdf5f97f589d74beb65e4a5ad54bb05b93a2c28baf7c717be94eb2",
+    "base_sha": "a2909d5a6bf83afa2af4cdb39c87134f9450e268"
+  },
+  "operation": "replace_section",
+  "payload": "HIER DER VOLLSTAENDIGE ABSCHNITTS-BODY OHNE UEBERSCHRIFTSZEILE.\nreplace_section ersetzt den gesamten Body. Wer nur zwei Zeilen aendern will,\nmuss trotzdem alle uebrigen Zeilen unveraendert mitliefern — sonst loescht\ndas Delta sie. deltakit prueft das NICHT; sichtbar wird es erst im PR-Diff.",
+  "meta": {
+    "rationale": "Begruendung fuer den menschlichen Reviewer. Ein Satz reicht, aber er muss den Zweck der Aenderung tragen, nicht ihre Mechanik beschreiben.",
+    "author": "externes Modell (blind)",
+    "status": "pending",
+    "session_id": "ULTRA-SESSION-20260914-DELTA-FORCE-S007",
+    "expected_lines": {
+      "before": 44,
+      "after": 44
+    }
+  },
+  "_hinweise": {
+    "context_hash": "PFLICHT. Berechnung: deltakit.compute_section_hash(section_text) — Abschnittstext INKLUSIVE Ueberschriftszeile. Fehlt er, lehnt deltakit ab. DELTA 1.1 Z.134 verlangt ihn nur fuer protected files; deltakit ist hier strenger als sein Protokoll, bewusst.",
+    "base_sha": "PFLICHT im Git-Repo. Commit-SHA, gegen den das Delta gebaut wurde. deltakit prueft, ob die Zieldatei sich seither bewegt hat.",
+    "operationen": "replace_section | insert_after | append_to_section | delete. Fuer eine Aenderung von zwei Zeilen gibt es in udp-1.0 keine engere Operation als replace_section — bekannter Befund, siehe PBP-S007.",
+    "was_deltakit_nicht_prueft": "Ob der payload inhaltlich richtig ist. Die Groesse der Aenderung ist jetzt deklarationspflichtig, ihre Richtigkeit bleibt beim PR-Diff und beim Menschen.",
+    "expected_lines": "PFLICHT. Erklaerte Zeilenbilanz des Abschnitts vor und nach der Aenderung. deltakit rendert den Abschnitt und lehnt ab, wenn die gemessene Bilanz abweicht. Keine Schwelle: eine grosse Loeschung ist erlaubt, eine undeklarierte nicht. Schliesst die Luecke, die ein unvollstaendiger payload sonst offen laesst (Befund PBP-S007)."
+  }
+}
