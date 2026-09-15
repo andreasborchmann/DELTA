@@ -19,6 +19,9 @@ Subkommandos:
   render   <delta.json> [--repo DIR] [--write]   Neue Bytes erzeugen (stdout oder Datei).
   pr-body  <delta.json> [--repo DIR]   Markdown fuer den PR-Body.
   selftest [--corpus DIR ...]          Regressionssuite der Leseseite (R-2).
+  hash     DOCUMENT --heading HEADING [--repo DIR]   Anker-Paket fuer Delta-Autoren.
+  verify   <delta.json> [--repo DIR] [--head HEAD]   Nach-Audit: byte-Vergleich.
+  audit    [--repo DIR] [--start SHA] [--head HEAD]  Gate-Abdeckung messen.
 
 Exit-Codes: 0 ok · 2 abgelehnt (Grund auf stderr) · 3 Bedienfehler.
 """
@@ -123,6 +126,28 @@ def _git(repo: Path, *args: str) -> subprocess.CompletedProcess:
                           capture_output=True, text=True)
 
 
+def resolve_doc(repo: Path, doc: str) -> tuple[Path | None, str]:
+    """target.document traegt nur den Dateinamen, das Repo hat Ordner.
+    Eindeutiger Treffer oder Ablehnung — nie der erste von mehreren."""
+    direct = repo / doc
+    if direct.is_file():
+        return direct, "ok"
+    name = Path(doc).name
+    hits = [p for p in repo.rglob(name)
+            if p.is_file() and ".git" not in p.parts]
+    if not hits:
+        return None, f"Zieldatei nicht im Repo gefunden: {doc}"
+    if len(hits) > 1:
+        rel = ", ".join(str(p.relative_to(repo)) for p in sorted(hits))
+        return None, f"Zieldatei mehrdeutig ({len(hits)} Treffer): {rel}"
+    return hits[0], "ok"
+
+
+def _show(repo: Path, ref: str, relpath: str) -> str | None:
+    r = _git(repo, "show", f"{ref}:{relpath}")
+    return r.stdout if r.returncode == 0 else None
+
+
 def check(delta: dict, repo: Path) -> tuple[bool, list[str], dict]:
     """Fail-closed. Jede Unklarheit ist eine Ablehnung, keine Warnung."""
     reasons: list[str] = []
@@ -155,17 +180,18 @@ def check(delta: dict, repo: Path) -> tuple[bool, list[str], dict]:
         reasons.append("target.document oder target.section_heading fehlt")
         return False, reasons, ctx
 
-    path = repo / doc
-    if not path.is_file():
-        reasons.append(f"Zieldatei nicht vorhanden: {doc}")
+    path, why = resolve_doc(repo, doc)
+    if path is None:
+        reasons.append(why)
         return False, reasons, ctx
+    rel = str(path.relative_to(repo))
 
     content = path.read_text(encoding="utf-8")
     sec = find_section(content, heading)
     if sec["status"] != "ok":
         reasons.append(f"Abschnitt nicht adressierbar: {sec['reason']}")
         return False, reasons, ctx
-    ctx.update(path=path, content=content, section=sec)
+    ctx.update(path=path, relpath=rel, content=content, section=sec)
 
     # --- Staleness, fail-closed. Kein Hash = keine Anwendung.
     declared = target.get("context_hash")
@@ -183,7 +209,7 @@ def check(delta: dict, repo: Path) -> tuple[bool, list[str], dict]:
         if not base:
             reasons.append("base_sha fehlt — im Git-Repo Pflicht")
         else:
-            r = _git(repo, "diff", "--quiet", base, "HEAD", "--", doc)
+            r = _git(repo, "diff", "--quiet", base, "HEAD", "--", rel)
             if r.returncode == 1:
                 reasons.append(f"Datei seit base_sha {base[:8]} veraendert")
             elif r.returncode not in (0, 1):
@@ -336,6 +362,127 @@ def cmd_selftest(a) -> int:
     return 0 if bad == 0 else 2
 
 
+def cmd_verify(a) -> int:
+    """Nach-Audit: Ist im Repository genau das gelandet, was das Delta gesagt hat?
+    Rechnet aus dem base_sha neu und vergleicht byte-weise. Braucht keine Rechte."""
+    import difflib
+    delta = _load(a.delta)
+    repo = Path(a.repo)
+    t = delta.get("target") or {}
+    doc, base, heading = t.get("document"), t.get("base_sha"), t.get("section_heading")
+    if not base:
+        print("NICHT PRUEFBAR: base_sha fehlt im Delta", file=sys.stderr)
+        return 2
+
+    path, why = resolve_doc(repo, doc)
+    rel = str(path.relative_to(repo)) if path else doc
+    base_content = _show(repo, base, rel)
+    if base_content is None:
+        print(f"NICHT PRUEFBAR: {rel} existiert nicht in {base[:8]}", file=sys.stderr)
+        return 2
+
+    sec = find_section(base_content, heading)
+    if sec["status"] != "ok":
+        print(f"NICHT PRUEFBAR: Abschnitt im Basisstand nicht adressierbar "
+              f"({sec['reason']})", file=sys.stderr)
+        return 2
+    base_hash = compute_section_hash(sec["section_text"])
+    if t.get("context_hash") and t["context_hash"] != base_hash:
+        print(f"BEFUND: context_hash passt nicht zum Basisstand — das Delta wurde "
+              f"gegen einen anderen Stand gebaut als gegen {base[:8]}", file=sys.stderr)
+        return 2
+
+    rendered = render(delta, {"content": base_content, "section": sec})
+    actual = _show(repo, a.head, rel)
+    if actual is None:
+        print(f"BEFUND: {rel} existiert in {a.head} nicht mehr", file=sys.stderr)
+        return 2
+
+    if rendered == actual:
+        print(f"verifiziert — {rel} in {a.head} ist byte-identisch mit dem, "
+              f"was {delta.get('delta_id')} aus {base[:8]} erzeugt")
+        return 0
+
+    print(f"BEFUND: {rel} weicht ab von dem, was {delta.get('delta_id')} erzeugt haette.",
+          file=sys.stderr)
+    d = list(difflib.unified_diff(rendered.split("\n"), actual.split("\n"),
+                                  "LAUT DELTA", f"IM REPO ({a.head})", lineterm="", n=1))
+    print("\n".join(d[: a.max_lines]), file=sys.stderr)
+    if len(d) > a.max_lines:
+        print(f"… {len(d) - a.max_lines} weitere Zeilen", file=sys.stderr)
+    return 2
+
+
+def cmd_audit(a) -> int:
+    """Gate-Abdeckung messen. Verhindert keinen Bypass — macht ihn sichtbar.
+    Konvention: die delta_id steht in der Commit-Nachricht."""
+    repo = Path(a.repo)
+    ids: dict[str, str] = {}
+    for p in sorted(Path(a.deltas).rglob("*.json")) if Path(a.deltas).is_dir() else []:
+        try:
+            d = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if d.get("delta_id"):
+            ids[d["delta_id"]] = (d.get("target") or {}).get("document", "?")
+
+    rng = f"{a.start}..{a.head}" if a.start else a.head
+    r = _git(repo, "log", "--format=%H%x1f%s", "--reverse", rng, "--", a.artefacts)
+    if r.returncode != 0:
+        print("git log fehlgeschlagen:", r.stderr.strip()[:160], file=sys.stderr)
+        return 3
+    rows = [l.split("\x1f", 1) for l in r.stdout.splitlines() if l.strip()]
+
+    covered, naked = [], []
+    for sha, subject in rows:
+        hit = next((i for i in ids if i in subject), None)
+        files = _git(repo, "show", "--name-only", "--format=", sha).stdout.split()
+        (covered if hit else naked).append((sha[:8], hit, subject, files))
+
+    print(f"Bereich: {rng} | Pfad: {a.artefacts}/ | Deltas bekannt: {len(ids)}")
+    print(f"Commits auf Artefakten: {len(rows)} | mit Delta-Bezug: {len(covered)} "
+          f"| OHNE: {len(naked)}")
+    for sha, hit, subject, _ in covered:
+        print(f"  [ok ] {sha}  {hit}  {subject[:60]}")
+    for sha, _, subject, files in naked:
+        print(f"  [OHNE DELTA] {sha}  {subject[:60]}")
+        for f in files:
+            print(f"               {f}")
+    unused = [i for i in ids if not any(h == i for _, h, _, _ in covered)]
+    if unused:
+        print("Deltas ohne zugehoerigen Commit:", ", ".join(sorted(unused)))
+    if naked:
+        print("\nBefund: Aenderungen an Artefakten ohne Delta-Bezug. In einem Repo ohne "
+              "durchgesetzte Branch Protection ist das nicht verhinderbar, aber messbar.")
+    return 2 if naked else 0
+
+
+def cmd_hash(a) -> int:
+    """Liefert das Anker-Paket fuer den Delta-Autor: Abschnittstext, Hash, base_sha."""
+    repo = Path(a.repo)
+    path, why = resolve_doc(repo, a.document)
+    if path is None:
+        print(why, file=sys.stderr)
+        return 2
+    rel = str(path.relative_to(repo))
+    sec = find_section(path.read_text(encoding="utf-8"), a.heading)
+    if sec["status"] != "ok":
+        print(f"Abschnitt nicht adressierbar: {sec['reason']}", file=sys.stderr)
+        return 2
+    body = sec["section_text"].split("\n")
+    head = _git(repo, "rev-parse", "HEAD")
+    print(f"document      : {Path(rel).name}")
+    print(f"pfad_im_repo  : {rel}")
+    print(f"section_heading: {a.heading}")
+    print(f"base_sha      : {head.stdout.strip() or '— (kein Git-Repo)'}")
+    print(f"context_hash  : {compute_section_hash(sec['section_text'])}")
+    print(f"expected_lines.before: {len(body)}")
+    print("--- ABSCHNITT, WORTGETREU (Ueberschrift + Body) ---")
+    print(sec["section_text"])
+    print("--- ENDE ABSCHNITT ---")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(prog="deltakit")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -349,6 +496,28 @@ def main() -> int:
     p = sub.add_parser("selftest")
     p.add_argument("--corpus", nargs="+", default=["."])
     p.set_defaults(fn=cmd_selftest)
+
+    p = sub.add_parser("hash")
+    p.add_argument("document")
+    p.add_argument("--heading", required=True)
+    p.add_argument("--repo", default=".")
+    p.set_defaults(fn=cmd_hash)
+
+    p = sub.add_parser("verify")
+    p.add_argument("delta")
+    p.add_argument("--repo", default=".")
+    p.add_argument("--head", default="HEAD")
+    p.add_argument("--max-lines", type=int, default=60)
+    p.set_defaults(fn=cmd_verify)
+
+    p = sub.add_parser("audit")
+    p.add_argument("--repo", default=".")
+    p.add_argument("--start", default=None, help="Nullpunkt-Commit (exklusiv)")
+    p.add_argument("--head", default="HEAD")
+    p.add_argument("--deltas", default="deltas")
+    p.add_argument("--artefacts", default="artefakte")
+    p.set_defaults(fn=cmd_audit)
+
     a = ap.parse_args()
     return a.fn(a)
 
