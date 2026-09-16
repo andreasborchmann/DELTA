@@ -133,11 +133,6 @@ SCHICHT 1 — PFLICHT:
 SCHICHT 1 — NAVIGATORISCH:
   ULTRA_REF_SYS_REGISTRY_RUNTIME_1_0.md
   Führungs-Referenz: UEBERGABE_PBP-S006_nach_S007.md
-                     [DELETE-Kandidat, Owner entscheidet: metaposition.md +
-                      metaposition_nachtrag.md + UEBERGABE_PBP-S005_nach_S006.md
-                      → Schicht 3. Ihr tragender Inhalt ist in der neuen Übergabe
-                      und in PBP-ART-006 aufgehoben. Bei Annahme: 7 Slots / 7 Dateien,
-                      Bündel-Slot-Befund geschlossen.]
 
 SCHICHT 2 — bei Bedarf:
   ULTRA_PROTOCOL_SYS_EVOLUTION_1_3.md
@@ -165,13 +160,12 @@ SCHICHT 3 — Archiv (niemals Standard-Session):
   [NEU, PBP-S006] rejected/ULTRA-Delta-20260912-001.json ·
   HANDBUCH_PBP-S006_Testhandgriffe.md · AUSWERTUNGSSCHLUESSEL_Lauf2_VERSIEGELT.md ·
   Rohausgaben der drei Läufe A/B/C (Haiku 4.5 ×2, Sonnet 5 niedrig).
-  [DELETE-Kandidat, s.o.] metaposition.md · metaposition_nachtrag.md ·
-  UEBERGABE_PBP-S005_nach_S006.md — bei Annahme hierher.
+  metaposition.md · metaposition_nachtrag.md ·
+  UEBERGABE_PBP-S005_nach_S006.md — archiviert (Owner-Entscheid 2026-09-15).
 ```
 
-**Layer-1-Count: 7 / 12 Slots — real 9 Dateien** (Slot 7 bündelt vier Dokumente).
-Bei Annahme des DELETE-Kandidaten: **7 / 7**. Die Bündel-Konvention hat weiterhin keine
-Grundlage in PBP oder im Registry-Constraint; der Befund bleibt bis zur Entscheidung offen.
+**Layer-1-Count: 7 / 7 Slots — 7 Dateien.**
+Der Befund zur Bündel-Konvention ist geschlossen.
 
 ### 2.2 PBP-Instanz-Naming-Konvention
 
