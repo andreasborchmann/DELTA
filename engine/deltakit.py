@@ -19,9 +19,6 @@ Subkommandos:
   render   <delta.json> [--repo DIR] [--write]   Neue Bytes erzeugen (stdout oder Datei).
   pr-body  <delta.json> [--repo DIR]   Markdown fuer den PR-Body.
   selftest [--corpus DIR ...]          Regressionssuite der Leseseite (R-2).
-  hash     DOCUMENT --heading HEADING [--repo DIR]   Anker-Paket fuer Delta-Autoren.
-  verify   <delta.json> [--repo DIR] [--head HEAD]   Nach-Audit: byte-Vergleich.
-  audit    [--repo DIR] [--start SHA] [--head HEAD]  Gate-Abdeckung messen.
 
 Exit-Codes: 0 ok · 2 abgelehnt (Grund auf stderr) · 3 Bedienfehler.
 """
@@ -36,7 +33,7 @@ import sys
 from pathlib import Path
 
 SCHEMA_VERSION = "udp-1.0"
-OPERATIONS = {"replace_section", "insert_after", "append_to_section", "delete"}
+OPERATIONS = {"replace_section", "replace_lines", "insert_after", "append_to_section", "delete"}
 
 _FENCE = re.compile(r"^(```|~~~)")
 _HEAD = re.compile(r"^#{1,6}\s")
@@ -90,11 +87,64 @@ def compute_section_hash(section_text: str) -> str:
 
 # ------------------------------------------------------- Operations-Semantik
 
-def render_section(section_text: str, operation: str, payload: str) -> str | None:
+def _kurz(s: str, n: int = 48) -> str:
+    one = s.replace("\n", "⏎")
+    return one if len(one) <= n else one[:n] + "…"
+
+
+def plan_line_edits(body: str, edits) -> str:
+    """replace_lines: jede Fundstelle muss genau einmal vorkommen.
+    Null Treffer, mehrere Treffer oder Ueberlappung sind Ablehnungen, keine Warnungen.
+    Der Autor liefert nur, was er aendert — unveraendertes kann er nicht beschaedigen."""
+    if not isinstance(edits, list) or not edits:
+        raise ValueError("replace_lines verlangt payload als nicht-leere Liste von {old,new}")
+    problems: list[str] = []
+    spans: list[tuple[int, int, str, int]] = []
+    for i, e in enumerate(edits, 1):
+        if not isinstance(e, dict) or not isinstance(e.get("old"), str) \
+                or not isinstance(e.get("new"), str):
+            problems.append(f"Edit {i}: erwartet {{\"old\": str, \"new\": str}}")
+            continue
+        old, new = e["old"], e["new"]
+        if not old:
+            problems.append(f"Edit {i}: old ist leer")
+            continue
+        if old == new:
+            problems.append(f"Edit {i}: old und new sind identisch — kein Edit")
+            continue
+        n = body.count(old)
+        if n == 0:
+            problems.append(f"Edit {i}: old nicht gefunden — \"{_kurz(old)}\"")
+        elif n > 1:
+            problems.append(f"Edit {i}: old {n}x vorhanden, mehrdeutig — \"{_kurz(old)}\"")
+        else:
+            s = body.index(old)
+            spans.append((s, s + len(old), new, i))
+    if problems:
+        raise ValueError(" | ".join(problems))
+    spans.sort()
+    for (_, e1, _, i1), (s2, _, _, i2) in zip(spans, spans[1:]):
+        if e1 > s2:
+            raise ValueError(f"Edits {i1} und {i2} ueberlappen dieselbe Textstelle")
+    out, pos = [], 0
+    for s, e, new, _ in spans:
+        out.append(body[pos:s])
+        out.append(new)
+        pos = e
+    out.append(body[pos:])
+    return "".join(out)
+
+
+def render_section(section_text: str, operation: str, payload) -> str | None:
     """Neuer Abschnittstext. None bei delete (Abschnitt faellt weg)."""
     lines = section_text.split("\n")
     heading = lines[0]
     body = lines[1:]
+
+    if operation == "replace_lines":
+        # Heading ist per Konstruktion geschuetzt: es wird nur der Body durchsucht.
+        return heading + "\n" + plan_line_edits("\n".join(body), payload)
+
     # Leerzeilen am Abschnittsende erhalten, damit der Diff minimal bleibt.
     trailing = 0
     while trailing < len(body) and body[len(body) - 1 - trailing].strip() == "":
@@ -160,10 +210,16 @@ def check(delta: dict, repo: Path) -> tuple[bool, list[str], dict]:
     op = delta.get("operation")
     if op not in OPERATIONS:
         reasons.append(f"operation ungueltig: {op!r}")
-    if op == "delete" and delta.get("payload", "") != "":
-        reasons.append("delete verlangt payload == ''")
-    if op != "delete" and not str(delta.get("payload", "")).strip():
-        reasons.append("payload leer")
+    pay = delta.get("payload", "")
+    if op == "delete":
+        if pay not in ("", [], None):
+            reasons.append("delete verlangt leeren payload")
+    elif op == "replace_lines":
+        if not isinstance(pay, list) or not pay:
+            reasons.append("replace_lines verlangt payload als nicht-leere Liste von {old,new}")
+    elif op in OPERATIONS:
+        if not isinstance(pay, str) or not pay.strip():
+            reasons.append("payload leer oder kein Text")
     if not (delta.get("meta") or {}).get("rationale"):
         reasons.append("meta.rationale fehlt")
 
@@ -217,12 +273,21 @@ def check(delta: dict, repo: Path) -> tuple[bool, list[str], dict]:
     elif base:
         reasons.append("base_sha angegeben, aber kein Git-Repo")
 
+    # --- Operation trocken ausfuehren. Fehler der Operation sind Ablehnungsgruende.
+    rendered: str | None = None
+    op_ok = False
+    if op in OPERATIONS:
+        try:
+            rendered = render_section(sec["section_text"], op, delta.get("payload", ""))
+            op_ok = True
+        except ValueError as e:
+            reasons.append(str(e))
+
     # --- N-2: erklaerte Absicht gegen gemessene Wirkung.
     # Kein Schwellenwert. Grosse Loeschungen sind erlaubt — undeklarierte nicht.
-    if isinstance(exp, dict) and isinstance(exp.get("before"), int) \
-            and isinstance(exp.get("after"), int) and op in OPERATIONS:
+    if op_ok and isinstance(exp, dict) and isinstance(exp.get("before"), int) \
+            and isinstance(exp.get("after"), int):
         act_before = len(sec["section_text"].split("\n"))
-        rendered = render_section(sec["section_text"], op, delta.get("payload", ""))
         act_after = 0 if rendered is None else len(rendered.split("\n"))
         ctx["balance"] = (act_before, act_after)
         if (act_before, act_after) != (exp["before"], exp["after"]):
