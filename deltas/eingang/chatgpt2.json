@@ -1,0 +1,34 @@
+{
+	"delta_id": "ULTRA-Δ-20260915-003",
+	"schema_version": "udp-1.0",
+	"target": {
+		"document": "ULTRA_DATA_SYS_DELTA-FORCE_0_4.md",
+		"section_heading": "### 2.1 Schicht-Architektur",
+		"context_hash": "sha256:7f02bc385f950e19af5c4e319a3d2d9ee7ffc6a8824f735ec20db0eac7f220b6",
+		"base_sha": "f2694fd6861c2dc6771fb60cb862f3a2c2d3063a"
+	},
+	"operation": "replace_lines",
+	"payload": [
+		{
+			"old": "  Führungs-Referenz: UEBERGABE_PBP-S006_nach_S007.md\n                     [DELETE-Kandidat, Owner entscheidet: metaposition.md +\n                      metaposition_nachtrag.md + UEBERGABE_PBP-S005_nach_S006.md\n                      → Schicht 3. Ihr tragender Inhalt ist in der neuen Übergabe\n                      und in PBP-ART-006 aufgehoben. Bei Annahme: 7 Slots / 7 Dateien,\n                      Bündel-Slot-Befund geschlossen.]",
+			"new": "  Führungs-Referenz: UEBERGABE_PBP-S006_nach_S007.md"
+		},
+		{
+			"old": "  [DELETE-Kandidat, s.o.] metaposition.md · metaposition_nachtrag.md ·\n  UEBERGABE_PBP-S005_nach_S006.md — bei Annahme hierher.",
+			"new": "  Archiviert, Owner-Entscheid 2026-09-15: metaposition.md · metaposition_nachtrag.md ·\n  UEBERGABE_PBP-S005_nach_S006.md."
+		},
+		{
+			"old": "**Layer-1-Count: 7 / 12 Slots — real 9 Dateien** (Slot 7 bündelt vier Dokumente).\nBei Annahme des DELETE-Kandidaten: **7 / 7**. Die Bündel-Konvention hat weiterhin keine\nGrundlage in PBP oder im Registry-Constraint; der Befund bleibt bis zur Entscheidung offen.",
+			"new": "**Layer-1-Count: 7 / 7 Slots — 7 Dateien.**\nDie Bündel-Konvention ist damit geschlossen."
+		}
+	],
+	"meta": {
+		"rationale": "Der angenommene DELETE-Kandidat wird aus der offenen Entscheidungslage entfernt, die drei Dokumente werden mit Owner-Entscheid vom 2026-09-15 als archiviert geführt und der Abschnittsabschluss auf 7 / 7 Slots bei 7 Dateien mit geschlossenem Bündel-Befund gesetzt.",
+		"author": "GPT-5.6 Luna",
+		"status": "pending",
+		"expected_lines": {
+			"before": 59,
+			"after": 52
+		}
+	}
+}
