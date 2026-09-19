@@ -1,6 +1,8 @@
 # DELTA-FORCE — PBP-Instanz
 ## SYS | Daten — PBP-Projektinstanz | ULTRA v1.3 Konform
 
+**Herkunftsvermerk:** Diese Datei ist der Testgegenstand der Transportachse im Projekt DELTA-FORCE, eine Kopie von `ULTRA_DATA_SYS_DELTA-FORCE_0_4.md`. Ihr §2.1 ist seit `337876f` (Lauf 1b) verändert. Sie ist kein gepflegtes Artefakt; die gepflegte PBP-Instanz liegt außerhalb dieses Repositorys.
+
 ---
 
 **Name:**             DELTA-FORCE — PBP-Instanz
