@@ -1,0 +1,126 @@
+Du schnürst einen maschinenlesbaren Änderungsauftrag für ein Markdown-Dokument.
+Du wendest ihn nicht an. Ein anderes System prüft und wendet an; du bekommst
+davon nichts zu sehen und sollst es auch nicht mitdenken.
+
+ANKER — unverändert übernehmen, nicht neu berechnen:
+  document        : TESTGEGENSTAND_TRANSPORTACHSE_01.md
+  section_heading : ### 2.1 Schicht-Architektur
+  base_sha        : 76b33f9d82ce8c0b56e510abd1a95ba1d21b2817
+  context_hash    : sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1
+  expected_lines.before : 53
+
+AUFGABE
+Der Owner hat die Schreibseite der Delta-Engine aufgegeben (PBP-ART-014) und
+die Rohausgaben von Lauf 1a ins Archiv gelegt. Nach der Änderung müssen genau
+diese drei Aussagen zutreffen:
+
+  1. Die kursive Notiz am Abschnittsanfang zum verworfenen Delta
+     ULTRA-Δ-20260912-001 entfällt vollständig; zwischen Überschrift und
+     Code-Block steht danach genau eine Leerzeile.
+  2. Unter "SCHICHT 2" tragen drei Einträge neue Vermerke:
+       ULTRA_PROTOCOL_SYS_DELTA_1_1.md: "§2.2 und Z.134 korrekturbedürftig, s. Sektion 1"
+       ULTRA_REF_SYS_DELTA_ENGINE_1_0.md: "Schreibseite aufgegeben, s. PBP-ART-014"
+       ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md: "[Entwurf — §6 überholt, s. PBP-ART-014]",
+       und zwar auf einer einzigen Zeile.
+  3. Unter "SCHICHT 3" steht als letzter Eintrag:
+       Rohausgaben Lauf 1a: ChatGPT.json · Grok.json · Qwen.json
+
+AUSGABEFORMAT
+Ein einziges JSON-Objekt. Kein Fließtext davor oder danach.
+
+{
+  "delta_id": "ULTRA-Δ-20260919-004",
+  "schema_version": "udp-1.0",
+  "target": {
+    "document": "...",
+    "section_heading": "...",
+    "context_hash": "...",
+    "base_sha": "..."
+  },
+  "operation": "replace_lines",
+  "payload": [
+    { "old": "<Textstelle wie sie jetzt dasteht>", "new": "<wie sie danach dasteht>" },
+    { "old": "...", "new": "..." }
+  ],
+  "meta": {
+    "rationale": "ein Satz, für einen menschlichen Prüfer",
+    "author": "<dein Modellname>",
+    "status": "pending",
+    "expected_lines": { "before": 53, "after": <Zahl> }
+  }
+}
+
+SO FUNKTIONIERT payload
+  Jedes Paar ist eine Suchen-und-Ersetzen-Anweisung auf dem Abschnittstext.
+  "old" wird WÖRTLICH gesucht — mit allen Leerzeichen, Einrückungen und
+  Zeilenumbrüchen, genau wie unten abgedruckt. "new" tritt an seine Stelle.
+
+  Gib NUR die Stellen an, die sich ändern. Alles andere bleibt automatisch
+  erhalten und darf nicht mitgeliefert werden.
+
+  "old" darf mehrere Zeilen umfassen (Zeilenumbruch als \n).
+  Um Zeilen zu löschen: die Zeilen in "old", ein kürzerer Text in "new".
+
+VIER REGELN, AN DENEN DER AUFTRAG SONST ABGELEHNT WIRD
+  - "old" muss im Abschnitt GENAU EINMAL vorkommen. Kein Treffer oder
+    mehrere Treffer werden abgelehnt. Nimm genug Kontext mit, damit die
+    Stelle eindeutig ist — eine einzelne kurze Zeile ist es oft nicht.
+  - Zwei Einträge dürfen sich nicht überlappen.
+  - "old" darf die Überschriftszeile nicht enthalten. Sie ist geschützt.
+  - expected_lines.after muss stimmen. Rechne: 53 minus gelöschte plus
+    neue Zeilen. Zähle nach, schätze nicht.
+
+ABSCHNITT IM AKTUELLEN ZUSTAND — folgt nach dieser Zeile.
+### 2.1 Schicht-Architektur
+
+*Delta `ULTRA-Δ-20260912-001` NICHT angewendet — auf `rejected` gesetzt (PBP-ART-009).
+Die zwei Statuszeilen, die es korrigieren sollte, stehen seit v0.3 korrekt.*
+
+```
+SCHICHT 0 (permanent, kein RAG-Slot):
+  Core + Claude Instructions — 2 Dateien
+
+SCHICHT 1 — PFLICHT:
+  ULTRA_PROTOCOL_SYS_PBP_1_2.md
+  ULTRA_PROTOCOL_SYS_CCR_1_4.md
+  ULTRA_PROTOCOL_SYS_INIT_RUNTIME_1_0.md
+  ULTRA_PROTOCOL_SYS_COMMIT_RUNTIME_1_0.md
+  ULTRA_DATA_SYS_DELTA-FORCE_0_4.md         ← diese Datei selbst, aktiv gepflegt
+
+SCHICHT 1 — NAVIGATORISCH:
+  ULTRA_REF_SYS_REGISTRY_RUNTIME_1_0.md
+  Führungs-Referenz: UEBERGABE_PBP-S006_nach_S007.md
+
+SCHICHT 2 — bei Bedarf:
+  ULTRA_PROTOCOL_SYS_EVOLUTION_1_3.md
+  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 korrekturbedürftig, s. Sektion 1
+  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← v1.0.1, vier Befunde PBP-ART-010
+  ULTRA_PROTOCOL_SYS_WARTUNG_1_3.md          (v1.3.10 — Δ-DF-01 angewendet 2026-08-31)
+  ULTRA_REF_SYS_REGISTRY_3_2.md              (v3.2.36 — kein ausstehender Fix)
+  ULTRA_REF_SYS_STRUKTUR_1_5.md              (nicht mit STRUKTURSTANDARD verwechseln)
+  ULTRA_REF_SYS_STRUKTURSTANDARD_1_1.md
+  ULTRA_REF_SYS_NAMING_CONVENTION_1_0.md
+  ULTRA_PROTOCOL_SYS_CIP_1_0.md              (Fossil, Härtung zurückgestellt)
+  ULTRA_ARCH_SYS_FOUNDATION_1_0.md
+  ULTRA_PROTOCOL_SYS_ITA_1_2.md
+  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §1 hat seit S006 zwei
+                                               gemessene Befunde, §3–§6 weiter unbelegt]
+
+SCHICHT 3 — Archiv (niemals Standard-Session):
+  layer3-archive/hist/, layer3-archive/delta-pakete/, layer3-archive/deprecated/
+  β-Vorgeschichte (Kern-Härtung/IMAGO-Linie) — Referenz, kein Layer-1/2-Slot.
+  PBP-S004-Arbeitsprodukte: TESTKIT.md, ULTRA_PROTOCOL_SYS_WARTUNG_TEST.md,
+  ULTRA_RUNBOOK_SYS_DELTA-FORCE_POISONED-RATIONALE_1_0.md,
+  ULTRA_REVIEW_SYS_DELTA-FORCE-TESTVORBEREITUNG_1_0.md
+  ULTRA_REVIEW_SYS_DELTA-FORCE-STANDORT_1_0 (P5 aus S005),
+  Lauf-1-Ausgabe der Urteilsachse (Claude Code Web, 2026-09-12).
+  [NEU, PBP-S006] rejected/ULTRA-Delta-20260912-001.json ·
+  HANDBUCH_PBP-S006_Testhandgriffe.md · AUSWERTUNGSSCHLUESSEL_Lauf2_VERSIEGELT.md ·
+  Rohausgaben der drei Läufe A/B/C (Haiku 4.5 ×2, Sonnet 5 niedrig).
+  metaposition.md · metaposition_nachtrag.md ·
+  UEBERGABE_PBP-S005_nach_S006.md — archiviert (Owner-Entscheid 2026-09-15).
+```
+
+**Layer-1-Count: 7 / 7 Slots — 7 Dateien.**
+Der Befund zur Bündel-Konvention ist geschlossen.
+
