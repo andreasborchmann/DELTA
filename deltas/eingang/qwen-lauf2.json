@@ -1,0 +1,42 @@
+{
+  "delta_id": "ULTRA-Δ-20260919-004",
+  "schema_version": "udp-1.0",
+  "target": {
+    "document": "TESTGEGENSTAND_TRANSPORTACHSE_01.md",
+    "section_heading": "### 2.1 Schicht-Architektur",
+    "context_hash": "sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1",
+    "base_sha": "76b33f9d82ce8c0b56e510abd1a95ba1d21b2817"
+  },
+  "operation": "replace_lines",
+  "payload": [
+    {
+      "old": "*Delta `ULTRA-Δ-20260912-001` NICHT angewendet — auf `rejected` gesetzt (PBP-ART-009).\nDie zwei Statuszeilen, die es korrigieren sollte, stehen seit v0.3 korrekt.*\n\n",
+      "new": ""
+    },
+    {
+      "old": "  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 korrekturbedürftig, s. Sektion 1",
+      "new": "  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 und Z.134 korrekturbedürftig, s. Sektion 1"
+    },
+    {
+      "old": "  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← v1.0.1, vier Befunde PBP-ART-010",
+      "new": "  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← Schreibseite aufgegeben, s. PBP-ART-014"
+    },
+    {
+      "old": "  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §1 hat seit S006 zwei\n                                               gemessene Befunde, §3–§6 weiter unbelegt]",
+      "new": "  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §6 überholt, s. PBP-ART-014]"
+    },
+    {
+      "old": "  Rohausgaben der drei Läufe A/B/C (Haiku 4.5 ×2, Sonnet 5 niedrig).\n  metaposition.md · metaposition_nachtrag.md ·\n  UEBERGABE_PBP-S005_nach_S006.md — archiviert (Owner-Entscheid 2026-09-15).",
+      "new": "  Rohausgaben Lauf 1a: ChatGPT.json · Grok.json · Qwen.json"
+    }
+  ],
+  "meta": {
+    "rationale": "Delta-Schreibseite aufgegeben (PBP-ART-014), verworfener Delta-Vermerk entfernt, SCHICHT-2-Vermerke aktualisiert, Rohausgaben Lauf 1a als letzten Archiv-Eintrag gesetzt.",
+    "author": "Qwen3.7",
+    "status": "pending",
+    "expected_lines": {
+      "before": 53,
+      "after": 47
+    }
+  }
+}
