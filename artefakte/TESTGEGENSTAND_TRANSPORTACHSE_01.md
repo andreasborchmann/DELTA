@@ -118,8 +118,7 @@ CROSS-PROJEKT-ABHÄNGIGKEITEN:
 
 ### 2.1 Schicht-Architektur
 
-*Delta `ULTRA-Δ-20260912-001` NICHT angewendet — auf `rejected` gesetzt (PBP-ART-009).
-Die zwei Statuszeilen, die es korrigieren sollte, stehen seit v0.3 korrekt.*
+
 
 ```
 SCHICHT 0 (permanent, kein RAG-Slot):
@@ -138,8 +137,8 @@ SCHICHT 1 — NAVIGATORISCH:
 
 SCHICHT 2 — bei Bedarf:
   ULTRA_PROTOCOL_SYS_EVOLUTION_1_3.md
-  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 korrekturbedürftig, s. Sektion 1
-  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← v1.0.1, vier Befunde PBP-ART-010
+  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 und Z.134 korrekturbedürftig, s. Sektion 1
+  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← Schreibseite aufgegeben, s. PBP-ART-014
   ULTRA_PROTOCOL_SYS_WARTUNG_1_3.md          (v1.3.10 — Δ-DF-01 angewendet 2026-08-31)
   ULTRA_REF_SYS_REGISTRY_3_2.md              (v3.2.36 — kein ausstehender Fix)
   ULTRA_REF_SYS_STRUKTUR_1_5.md              (nicht mit STRUKTURSTANDARD verwechseln)
@@ -148,8 +147,7 @@ SCHICHT 2 — bei Bedarf:
   ULTRA_PROTOCOL_SYS_CIP_1_0.md              (Fossil, Härtung zurückgestellt)
   ULTRA_ARCH_SYS_FOUNDATION_1_0.md
   ULTRA_PROTOCOL_SYS_ITA_1_2.md
-  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §1 hat seit S006 zwei
-                                               gemessene Befunde, §3–§6 weiter unbelegt]
+  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §6 überholt, s. PBP-ART-014]
 
 SCHICHT 3 — Archiv (niemals Standard-Session):
   layer3-archive/hist/, layer3-archive/delta-pakete/, layer3-archive/deprecated/
@@ -164,6 +162,7 @@ SCHICHT 3 — Archiv (niemals Standard-Session):
   Rohausgaben der drei Läufe A/B/C (Haiku 4.5 ×2, Sonnet 5 niedrig).
   metaposition.md · metaposition_nachtrag.md ·
   UEBERGABE_PBP-S005_nach_S006.md — archiviert (Owner-Entscheid 2026-09-15).
+  Rohausgaben Lauf 1a: ChatGPT.json · Grok.json · Qwen.json
 ```
 
 **Layer-1-Count: 7 / 7 Slots — 7 Dateien.**
