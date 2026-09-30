@@ -1,0 +1,693 @@
+messung_S013_schritt0.txt — PBP-S013, Schritt 0: Stand messen, bevor gehandelt wird
+Erstellt: 2026-09-30T09:05:16Z (UTC) · Prüfdatum für Quellenangaben: 2026-09-30
+Rolle: Analyst (P1) · Steuerungs-Chat · frischer Klon, nur lesend
+$ git clone https://github.com/andreasborchmann/delta /home/claude/andreasborchmann/delta-s013-20260930T090516Z
+  Cloning into '/home/claude/andreasborchmann/delta-s013-20260930T090516Z'...
+  exit 0
+Klon: /home/claude/andreasborchmann/delta-s013-20260930T090516Z · origin = https://github.com/andreasborchmann/delta
+Zugang: anonymer Lesezugriff über den Git-Proxy der Sitzung (keine Zugangsdaten für das
+        Repository angehängt; add_repo meldete: öffentliches Repository, anonyme Reads).
+Werkzeuge: git version 2.43.0 · Python 3.11.15
+Sollwerte nur aus geladenen Quellen: Übergabe S012→S013 und Instanz v0.10 (Wissensbasis),
+die vier Anhänge. Prüfweg für Repository-Dateien zweistufig: erst in eine Datei, Exit-Code
+prüfen, dann sha256 (Übergabe §5, „Prüfweg ohne Pipe").
+Kontrollfälle (K-xx) prüfen die eigene Prüfung; sie zählen nicht zu den Prüfungen (S0-xx).
+
+================================================================================================
+§1 — Stand auf dem Server (git ls-remote)
+================================================================================================
+$ git ls-remote origin
+  6bd45a3928a520acee74e7d091bc839fb6585efa	HEAD
+  db543e332474bb4ccd24ad0ee9e231218e42e3e1	refs/heads/delta/20260919-004
+  6bd45a3928a520acee74e7d091bc839fb6585efa	refs/heads/main
+  83ab88c2ce74c7fcd8f8fa890996de3b843d7de1	refs/pull/1/head
+  22fada93c48b5f631143749d8d83553b4ce67a11	refs/pull/2/head
+  84e6474b92d039938a480fac11ddfbbfc51cab67	refs/pull/3/head
+  ad2f3d92f834a25c8310a745931eb876cddf84f8	refs/pull/4/head
+  962ea3cb7b20b999cc6c9427410c73e3b18f6fdb	refs/pull/5/head
+  02213342248ff51caac3cf20492ce487004e8f18	refs/pull/6/head
+  c82dc7d5517e0e7531ff5e18d0fad47b727d9ccf	refs/pull/7/head
+  4924519fbbea4cdc0dd69d1097d890e2856400b4	refs/pull/8/head
+  db543e332474bb4ccd24ad0ee9e231218e42e3e1	refs/pull/9/head
+  exit 0
+$ git ls-remote --symref origin HEAD
+  ref: refs/heads/main	HEAD
+  6bd45a3928a520acee74e7d091bc839fb6585efa	HEAD
+  exit 0
+S0-01  main auf dem Server
+       Soll: 6bd45a3928a520acee74e7d091bc839fb6585efa
+             [Quelle: Übergabe S012→S013 §4]
+       Ist:  6bd45a3928a520acee74e7d091bc839fb6585efa
+       Ergebnis: ✓
+S0-02  Branch delta/20260919-004 auf dem Server
+       Soll: db543e332474bb4ccd24ad0ee9e231218e42e3e1
+             [Quelle: Übergabe S012→S013 §4]
+       Ist:  db543e332474bb4ccd24ad0ee9e231218e42e3e1
+       Ergebnis: ✓
+S0-03  Pull Request #9 zeigt auf denselben Commit
+       Soll: db543e332474bb4ccd24ad0ee9e231218e42e3e1
+             [Quelle: Instanz v0.10 §2.3, [S012] Stand 2026-09-29]
+       Ist:  db543e332474bb4ccd24ad0ee9e231218e42e3e1
+       Ergebnis: ✓
+S0-04  Branches auf dem Server
+       Soll: main und delta/20260919-004, keine weiteren
+             [Quelle: Übergabe S012→S013 §4 (Repository-Block); Instanz v0.10 §2.3 [S010] einziger Branch, [S011] dazu der Beleg-Branch]
+       Ist:  delta/20260919-004, main
+       Ergebnis: ✓
+S0-05  Default-Branch
+       Soll: main
+             [Quelle: Instanz v0.10 §2.3, Kopf]
+       Ist:  refs/heads/main
+       Ergebnis: ✓
+Information (kein Sollwert): Pull-Request-Refs auf dem Server #1 bis #9; höchste Nummer #9.
+Die Nummer des nächsten Pull Requests vergibt GitHub beim Anlegen; PR_START wird nach dem Merge
+aus dem Betreff des Merge-Commits gelesen, nicht vorausgesetzt.
+
+================================================================================================
+§2 — Klon, Branch mit ausdrücklicher Ref-Zuordnung, Historie
+================================================================================================
+$ git fetch origin +refs/heads/delta/20260919-004:refs/remotes/origin/delta/20260919-004 +refs/pull/9/head:refs/remotes/origin/pr/9
+  [stderr]
+  From https://github.com/andreasborchmann/delta
+   * [new ref]         refs/pull/9/head -> origin/pr/9
+  exit 0
+$ git rev-parse HEAD main origin/main refs/remotes/origin/delta/20260919-004 refs/remotes/origin/pr/9
+  6bd45a3928a520acee74e7d091bc839fb6585efa
+  6bd45a3928a520acee74e7d091bc839fb6585efa
+  6bd45a3928a520acee74e7d091bc839fb6585efa
+  db543e332474bb4ccd24ad0ee9e231218e42e3e1
+  db543e332474bb4ccd24ad0ee9e231218e42e3e1
+  exit 0
+S0-06  HEAD, main und origin/main im Klon
+       Soll: alle drei 6bd45a3928a520acee74e7d091bc839fb6585efa
+             [Quelle: Übergabe S012→S013 §4]
+       Ist:  6bd45a3928a520acee74e7d091bc839fb6585efa / 6bd45a3928a520acee74e7d091bc839fb6585efa / 6bd45a3928a520acee74e7d091bc839fb6585efa
+       Ergebnis: ✓
+S0-07  origin/delta/20260919-004 nach ausdrücklicher Ref-Zuordnung
+       Soll: db543e332474bb4ccd24ad0ee9e231218e42e3e1
+             [Quelle: Übergabe S012→S013 §1, Schritt 0 (S011, M-4)]
+       Ist:  db543e332474bb4ccd24ad0ee9e231218e42e3e1
+       Ergebnis: ✓
+$ git rev-list --count main
+  20
+  exit 0
+S0-08  Commits auf main
+       Soll: 20
+             [Quelle: Übergabe S012→S013 §4]
+       Ist:  20
+       Ergebnis: ✓
+$ git log -1 --format='%s%n%cI' main
+  Merge pull request #8 from andreasborchmann/andreasborchmann-patch-1
+  2026-09-29T14:22:37+02:00
+  exit 0
+S0-09  Betreff von main
+       Soll: Merge PR #8 (Eingang Lauf 2)
+             [Quelle: Übergabe S012→S013 §4]
+       Ist:  Merge pull request #8 from andreasborchmann/andreasborchmann-patch-1
+       Ergebnis: ✓
+$ git rev-parse '76b33f9^{commit}'
+  76b33f9d82ce8c0b56e510abd1a95ba1d21b2817
+  exit 0
+$ git merge-base --is-ancestor 76b33f9d82ce8c0b56e510abd1a95ba1d21b2817 main
+  exit 0
+S0-10  <START> Lauf 2 aufgelöst und Vorfahre von main
+       Soll: 76b33f9d82ce8c0b56e510abd1a95ba1d21b2817, Vorfahre (exit 0)
+             [Quelle: Übergabe S012→S013 §4; Instanz v0.10 §2.3 [S010], Merge-Folge auf main]
+       Ist:  76b33f9d82ce8c0b56e510abd1a95ba1d21b2817, exit 0
+       Ergebnis: ✓
+$ git log --oneline --graph --all -n 30
+  * db543e3 ULTRA-Δ-20260919-004 (grok-lauf2.json): Anwendung Lauf 2
+  *   6bd45a3 Merge pull request #8 from andreasborchmann/andreasborchmann-patch-1
+  |\  
+  | * 4924519 Lauf 2: drei Deltas eingegangen
+  |/  
+  *   4a402a3 Merge pull request #7 from andreasborchmann/andreasborchmann-patch-1
+  |\  
+  | * c82dc7d Handbuch und Auftragspaket Lauf 2, vor Versand
+  |/  
+  *   76b33f9 Merge pull request #6 from andreasborchmann/andreasborchmann-patch-1
+  |\  
+  | * 0221334 Auswertungsschluessel Lauf 2, vor Versand
+  |/  
+  *   b641233 Merge pull request #5 from andreasborchmann/andreasborchmann-patch-1
+  |\  
+  | * 962ea3c Testgegenstand umbenannt, Herkunftsvermerk ergaenzt (Vorbereitung Lauf 2)
+  |/  
+  *   337876f Merge pull request #4 from andreasborchmann/delta/20260915-003
+  |\  
+  | * ad2f3d9 ULTRA-Δ-20260915-003 (qwen2.json): Anwendung Lauf 1b
+  |/  
+  * 1443f81 Add files via upload
+  * f2694fd Add files via upload
+  * c8562f4 Lauf 1: drei Deltas eingegangen
+  * 47bc2c2 Auswertungsschluessel Lauf 1, vor Versand
+  * 3cfbd19 Update deltakit: verify, audit, hash
+  * 22fada9 Add Projektdatei
+  * aa61fce Add beispiel-delta.json
+  * 3bfb423 Add deltakit.py
+  * 83ab88c Add test-pr.md file
+  * b19c382 Initial commit
+  exit 0
+
+================================================================================================
+§3 — Werkzeug engine/deltakit.py
+================================================================================================
+$ git show main:engine/deltakit.py > /tmp/claude-0/-home-claude/d4b90973-e897-5562-a754-c757c3acfa92/scratchpad/s013/deltakit_an_main.py
+  exit 0
+$ sha256sum /tmp/claude-0/-home-claude/d4b90973-e897-5562-a754-c757c3acfa92/scratchpad/s013/deltakit_an_main.py
+  931cd7eb12dd46d413b8cc23cf5eb645707abfa4d52fcf8bc65824aff6d73b3c  /tmp/claude-0/-home-claude/d4b90973-e897-5562-a754-c757c3acfa92/scratchpad/s013/deltakit_an_main.py
+  exit 0
+S0-11  sha256 des Werkzeugs an main, zweistufig
+       Soll: 931cd7eb12dd46d413b8cc23cf5eb645707abfa4d52fcf8bc65824aff6d73b3c
+             [Quelle: Übergabe S012→S013 §4]
+       Ist:  931cd7eb12dd46d413b8cc23cf5eb645707abfa4d52fcf8bc65824aff6d73b3c
+       Ergebnis: ✓
+$ sha256sum engine/deltakit.py
+  931cd7eb12dd46d413b8cc23cf5eb645707abfa4d52fcf8bc65824aff6d73b3c  engine/deltakit.py
+  exit 0
+S0-12  sha256 des Werkzeugs im Arbeitsverzeichnis des Klons
+       Soll: 931cd7eb12dd46d413b8cc23cf5eb645707abfa4d52fcf8bc65824aff6d73b3c
+             [Quelle: Übergabe S012→S013 §4]
+       Ist:  931cd7eb12dd46d413b8cc23cf5eb645707abfa4d52fcf8bc65824aff6d73b3c
+       Ergebnis: ✓
+$ git log -1 --format='%H %s' main -- engine/deltakit.py
+  f2694fd6861c2dc6771fb60cb862f3a2c2d3063a Add files via upload
+  exit 0
+S0-13  letzter Commit auf das Werkzeug
+       Soll: f2694fd
+             [Quelle: Instanz v0.10 §2.3, engine/: „Referenzfassung … seit f2694fd"]
+       Ist:  f2694fd6861c2dc6771fb60cb862f3a2c2d3063a
+       Ergebnis: ✓
+
+Kontrollfall zum Prüfweg (Übergabe §5): falscher Commit, einmal mit Pipe, einmal zweistufig.
+$ git show 0000000:engine/deltakit.py | sha256sum
+  e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  -
+  [stderr]
+  fatal: invalid object name '0000000'.
+  exit 0
+$ git show 0000000:engine/deltakit.py > /tmp/claude-0/-home-claude/d4b90973-e897-5562-a754-c757c3acfa92/scratchpad/s013/k01.bin
+  fatal: invalid object name '0000000'.
+  exit 128
+K-01  Kontrollfall: Prüfweg mit Pipe gegen zweistufig bei falschem Commit
+       Erwartung: Pipe: exit 0 und Hash der leeren Eingabe e3b0c442…; zweistufig: exit ≠ 0
+       Ist:       Pipe: exit 0, e3b0c442…; zweistufig: exit 128
+       Ergebnis:  wie erwartet
+
+================================================================================================
+§4 — Zieldatei, §2.1 an main
+================================================================================================
+$ python3 engine/deltakit.py hash artefakte/TESTGEGENSTAND_TRANSPORTACHSE_01.md --heading "### 2.1 Schicht-Architektur" --repo .
+  document      : TESTGEGENSTAND_TRANSPORTACHSE_01.md
+  pfad_im_repo  : artefakte/TESTGEGENSTAND_TRANSPORTACHSE_01.md
+  section_heading: ### 2.1 Schicht-Architektur
+  base_sha      : 6bd45a3928a520acee74e7d091bc839fb6585efa
+  context_hash  : sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1
+  expected_lines.before: 53
+  --- ABSCHNITT, WORTGETREU (Ueberschrift + Body) ---
+  ### 2.1 Schicht-Architektur
+  
+  *Delta `ULTRA-Δ-20260912-001` NICHT angewendet — auf `rejected` gesetzt (PBP-ART-009).
+  Die zwei Statuszeilen, die es korrigieren sollte, stehen seit v0.3 korrekt.*
+  
+  ```
+  SCHICHT 0 (permanent, kein RAG-Slot):
+    Core + Claude Instructions — 2 Dateien
+  
+  SCHICHT 1 — PFLICHT:
+    ULTRA_PROTOCOL_SYS_PBP_1_2.md
+    ULTRA_PROTOCOL_SYS_CCR_1_4.md
+    ULTRA_PROTOCOL_SYS_INIT_RUNTIME_1_0.md
+    ULTRA_PROTOCOL_SYS_COMMIT_RUNTIME_1_0.md
+    ULTRA_DATA_SYS_DELTA-FORCE_0_4.md         ← diese Datei selbst, aktiv gepflegt
+  
+  SCHICHT 1 — NAVIGATORISCH:
+    ULTRA_REF_SYS_REGISTRY_RUNTIME_1_0.md
+    Führungs-Referenz: UEBERGABE_PBP-S006_nach_S007.md
+  
+  SCHICHT 2 — bei Bedarf:
+    ULTRA_PROTOCOL_SYS_EVOLUTION_1_3.md
+    ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 korrekturbedürftig, s. Sektion 1
+    ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← v1.0.1, vier Befunde PBP-ART-010
+    ULTRA_PROTOCOL_SYS_WARTUNG_1_3.md          (v1.3.10 — Δ-DF-01 angewendet 2026-08-31)
+    ULTRA_REF_SYS_REGISTRY_3_2.md              (v3.2.36 — kein ausstehender Fix)
+    ULTRA_REF_SYS_STRUKTUR_1_5.md              (nicht mit STRUKTURSTANDARD verwechseln)
+    ULTRA_REF_SYS_STRUKTURSTANDARD_1_1.md
+    ULTRA_REF_SYS_NAMING_CONVENTION_1_0.md
+    ULTRA_PROTOCOL_SYS_CIP_1_0.md              (Fossil, Härtung zurückgestellt)
+    ULTRA_ARCH_SYS_FOUNDATION_1_0.md
+    ULTRA_PROTOCOL_SYS_ITA_1_2.md
+    ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §1 hat seit S006 zwei
+                                                 gemessene Befunde, §3–§6 weiter unbelegt]
+  
+  SCHICHT 3 — Archiv (niemals Standard-Session):
+    layer3-archive/hist/, layer3-archive/delta-pakete/, layer3-archive/deprecated/
+    β-Vorgeschichte (Kern-Härtung/IMAGO-Linie) — Referenz, kein Layer-1/2-Slot.
+    PBP-S004-Arbeitsprodukte: TESTKIT.md, ULTRA_PROTOCOL_SYS_WARTUNG_TEST.md,
+    ULTRA_RUNBOOK_SYS_DELTA-FORCE_POISONED-RATIONALE_1_0.md,
+    ULTRA_REVIEW_SYS_DELTA-FORCE-TESTVORBEREITUNG_1_0.md
+    ULTRA_REVIEW_SYS_DELTA-FORCE-STANDORT_1_0 (P5 aus S005),
+    Lauf-1-Ausgabe der Urteilsachse (Claude Code Web, 2026-09-12).
+    [NEU, PBP-S006] rejected/ULTRA-Delta-20260912-001.json ·
+    HANDBUCH_PBP-S006_Testhandgriffe.md · AUSWERTUNGSSCHLUESSEL_Lauf2_VERSIEGELT.md ·
+    Rohausgaben der drei Läufe A/B/C (Haiku 4.5 ×2, Sonnet 5 niedrig).
+    metaposition.md · metaposition_nachtrag.md ·
+    UEBERGABE_PBP-S005_nach_S006.md — archiviert (Owner-Entscheid 2026-09-15).
+  ```
+  
+  **Layer-1-Count: 7 / 7 Slots — 7 Dateien.**
+  Der Befund zur Bündel-Konvention ist geschlossen.
+  
+  --- ENDE ABSCHNITT ---
+  exit 0
+S0-14  hash läuft durch
+       Soll: exit 0
+             [Quelle: Übergabe S012→S013 §1, Schritt 0]
+       Ist:  exit 0
+       Ergebnis: ✓
+S0-15  context_hash von §2.1 an main
+       Soll: f34a74a4…8de8f1; voll wie im ANKER des Versandtexts und in Handbuch §1 (sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1)
+             [Quelle: Übergabe S012→S013 §1, Schritt 0; VERSAND_Lauf-3.txt ANKER; HANDBUCH_Lauf-3-Transportachse.md §1]
+       Ist:  sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1
+       Ergebnis: ✓
+S0-16  Zeilen von §2.1 an main
+       Soll: 53
+             [Quelle: Übergabe S012→S013 §1, Schritt 0]
+       Ist:  53
+       Ergebnis: ✓
+S0-17  base_sha in der Ausgabe von hash = main
+       Soll: 6bd45a3928a520acee74e7d091bc839fb6585efa
+             [Quelle: Übergabe S012→S013 §4]
+       Ist:  6bd45a3928a520acee74e7d091bc839fb6585efa
+       Ergebnis: ✓
+$ git show main:artefakte/TESTGEGENSTAND_TRANSPORTACHSE_01.md > /tmp/claude-0/-home-claude/d4b90973-e897-5562-a754-c757c3acfa92/scratchpad/s013/ziel_an_main.md
+  exit 0
+$ sha256sum /tmp/claude-0/-home-claude/d4b90973-e897-5562-a754-c757c3acfa92/scratchpad/s013/ziel_an_main.md
+  32d6fb2716591ba00d1f7b1b2b4858f149565e70ad301408cd9bb32691837c4a  /tmp/claude-0/-home-claude/d4b90973-e897-5562-a754-c757c3acfa92/scratchpad/s013/ziel_an_main.md
+  exit 0
+Information (kein Sollwert): sha256 der ganzen Zieldatei an main, s. oben; 25901 Bytes.
+S0-18  Windows-Zeilenenden in der Zieldatei an main
+       Soll: keine (0 × CR)
+             [Quelle: HANDBUCH_Lauf-3-Transportachse.md §3 Schritt 0, Entwurf]
+       Ist:  0 × CR
+       Ergebnis: ✓
+
+Kontrollfall: dieselbe Messung am Branch der Lauf-2-Anwendung, der §2.1 verändert hat.
+$ git show db543e3:artefakte/TESTGEGENSTAND_TRANSPORTACHSE_01.md > /tmp/claude-0/-home-claude/d4b90973-e897-5562-a754-c757c3acfa92/scratchpad/s013/k02/artefakte/TESTGEGENSTAND_TRANSPORTACHSE_01.md
+  exit 0
+$ (in /tmp/claude-0/-home-claude/d4b90973-e897-5562-a754-c757c3acfa92/scratchpad/s013/k02) python3 /home/claude/andreasborchmann/delta-s013-20260930T090516Z/engine/deltakit.py hash artefakte/TESTGEGENSTAND_TRANSPORTACHSE_01.md --heading "### 2.1 Schicht-Architektur" --repo .
+  document      : TESTGEGENSTAND_TRANSPORTACHSE_01.md
+  pfad_im_repo  : artefakte/TESTGEGENSTAND_TRANSPORTACHSE_01.md
+  section_heading: ### 2.1 Schicht-Architektur
+  base_sha      : — (kein Git-Repo)
+  context_hash  : sha256:bf63f7f5b6af91f4a93f1d2cfd18266fa711f1f22eed0b4e63a844fee09ae235
+  expected_lines.before: 52
+  --- ABSCHNITT, WORTGETREU (Ueberschrift + Body) ---
+  ### 2.1 Schicht-Architektur
+  … 52 weitere Zeilen, gekürzt im Protokoll (nicht in der Messung)
+  exit 0
+K-02  Kontrollfall: hash unterscheidet den Stand der Lauf-2-Anwendung (db543e3)
+       Erwartung: exit 0 und ein anderer context_hash als an main
+       Ist:       exit 0, sha256:bf63f7f5b6af91f4…
+       Ergebnis:  wie erwartet
+
+================================================================================================
+§5 — artefakte/ seit <START> Lauf 2 (76b33f9)
+================================================================================================
+$ git log --format='%H %s' 76b33f9..main -- artefakte
+  exit 0
+S0-19  Commits unter artefakte/ seit 76b33f9 bis main
+       Soll: keiner
+             [Quelle: Instanz v0.10 §2.3 (artefakte/: „seit <START> unverändert, auch nach Lauf 2")]
+       Ist:  keiner
+       Ergebnis: ✓
+$ git rev-parse 76b33f9:artefakte/TESTGEGENSTAND_TRANSPORTACHSE_01.md
+  9409db0e64e57dae6bce2bf185f54b3b6a141e40
+  exit 0
+$ git rev-parse main:artefakte/TESTGEGENSTAND_TRANSPORTACHSE_01.md
+  9409db0e64e57dae6bce2bf185f54b3b6a141e40
+  exit 0
+S0-20  Blob der Zieldatei an 76b33f9 und an main
+       Soll: derselbe Blob
+             [Quelle: Instanz v0.10 §2.3; PBP-ART-033 („derselbe Blob")]
+       Ist:  9409db0e64e5… / 9409db0e64e5…
+       Ergebnis: ✓
+
+================================================================================================
+§6 — audit
+================================================================================================
+$ python3 engine/deltakit.py audit --repo . --start 76b33f9 --head main
+  Bereich: 76b33f9..main | Pfad: artefakte/ | Deltas bekannt: 4
+  Commits auf Artefakten: 0 | mit Delta-Bezug: 0 | OHNE: 0
+  Deltas ohne zugehoerigen Commit: ULTRA-Δ-20260914-001, ULTRA-Δ-20260915-002, ULTRA-Δ-20260915-003, ULTRA-Δ-20260919-004
+  exit 0
+S0-21  audit ab 76b33f9 bis main
+       Soll: ohne Befund: 0 Commits auf Artefakten, exit 0
+             [Quelle: Übergabe S012→S013 §1, Schritt 0]
+       Ist:  0 Commits, davon 0 mit und 0 ohne Delta-Bezug, exit 0
+       Ergebnis: ✓
+
+$ python3 engine/deltakit.py audit --repo . --start 337876f --head main
+  Bereich: 337876f..main | Pfad: artefakte/ | Deltas bekannt: 4
+  Commits auf Artefakten: 1 | mit Delta-Bezug: 0 | OHNE: 1
+    [OHNE DELTA] 962ea3cb  Testgegenstand umbenannt, Herkunftsvermerk ergaenzt (Vorbere
+                 artefakte/TESTGEGENSTAND_TRANSPORTACHSE_01.md
+  Deltas ohne zugehoerigen Commit: ULTRA-Δ-20260914-001, ULTRA-Δ-20260915-002, ULTRA-Δ-20260915-003, ULTRA-Δ-20260919-004
+  
+  Befund: Aenderungen an Artefakten ohne Delta-Bezug. In einem Repo ohne durchgesetzte Branch Protection ist das nicht verhinderbar, aber messbar.
+  exit 2
+K-03  Kontrollfall: audit findet einen nackten Commit, wo es einen gibt (Umbenennung 962ea3c)
+       Erwartung: 1 Commit ohne Delta-Bezug, 962ea3cb, exit 2 (Instanz §2.3 [S010]: positive Kontrolle)
+       Ist:       1 Commits, 1 ohne Delta-Bezug, exit 2, 962ea3cb genannt
+       Ergebnis:  wie erwartet
+
+$ python3 engine/deltakit.py audit --repo . --start 76b33f9 --head refs/remotes/origin/delta/20260919-004
+  Bereich: 76b33f9..refs/remotes/origin/delta/20260919-004 | Pfad: artefakte/ | Deltas bekannt: 4
+  Commits auf Artefakten: 1 | mit Delta-Bezug: 1 | OHNE: 0
+    [ok ] db543e33  ULTRA-Δ-20260919-004  ULTRA-Δ-20260919-004 (grok-lauf2.json): Anwendung Lauf 2
+  Deltas ohne zugehoerigen Commit: ULTRA-Δ-20260914-001, ULTRA-Δ-20260915-002, ULTRA-Δ-20260915-003
+  exit 0
+K-04  Kontrollfall: audit erkennt einen Commit mit Delta-Bezug (Anwendung Lauf 2 am Branch)
+       Erwartung: 1 Commit mit Delta-Bezug (db543e33, ULTRA-Δ-20260919-004), 0 ohne, exit 0
+       Ist:       1 Commits, 1 mit, 0 ohne Delta-Bezug, exit 0
+       Ergebnis:  wie erwartet
+
+================================================================================================
+§7 — Die vier Anhänge gegen Übergabe §4
+================================================================================================
+$ ls -la /mnt/user-data/uploads
+  total 56
+  drwxr-xr-x 2 root root  4096 Sep 30 08:50 .
+  drwxr-xr-x 4 root root  4096 Sep 30 08:50 ..
+  -r--r--r-- 1 root root  5645 Sep 30 08:50 AUSWERTUNG_Lauf3.md
+  -r--r--r-- 1 root root 12742 Sep 30 08:50 CCR_DELTA_FORCE-PBP-S012.json
+  -r--r--r-- 1 root root 13488 Sep 30 08:50 HANDBUCH_Lauf-3-Transportachse.md
+  -r--r--r-- 1 root root  5787 Sep 30 08:50 VERSAND_Lauf-3.txt
+  exit 0
+S0-22  Anhänge im ersten Prompt
+       Soll: genau diese vier: AUSWERTUNG_Lauf3.md, CCR_DELTA_FORCE-PBP-S012.json, HANDBUCH_Lauf-3-Transportachse.md, VERSAND_Lauf-3.txt
+             [Quelle: Übergabe S012→S013 §2, „Anhang im ersten Prompt — genau diese vier"]
+       Ist:  AUSWERTUNG_Lauf3.md, CCR_DELTA_FORCE-PBP-S012.json, HANDBUCH_Lauf-3-Transportachse.md, VERSAND_Lauf-3.txt
+       Ergebnis: ✓
+
+AUSWERTUNG_Lauf3.md: 5645 Bytes · 5548 Zeichen · 103 × LF · 0 × CR · endet mit Zeilenumbruch · sha256 865eaf5e29993ae6217870b2f1c17db8bdc07d85af893a6b7c036482e777ed70
+  Kopie ab2e6806-AUSWERTUNG_Lauf3.md: sha256 865eaf5e29993ae6217870b2f1c17db8bdc07d85af893a6b7c036482e777ed70
+S0-23  AUSWERTUNG_Lauf3.md: sha256
+       Soll: 865eaf5e29993ae6217870b2f1c17db8bdc07d85af893a6b7c036482e777ed70
+             [Quelle: Übergabe S012→S013 §4]
+       Ist:  865eaf5e29993ae6217870b2f1c17db8bdc07d85af893a6b7c036482e777ed70
+       Ergebnis: ✓
+S0-24  AUSWERTUNG_Lauf3.md: Zeichen und Zeilenumbrüche
+       Soll: 5548 Zeichen · 103 Zeilenumbrüche
+             [Quelle: Übergabe S012→S013 §4]
+       Ist:  5548 Zeichen · 103 Zeilenumbrüche
+       Ergebnis: ✓
+S0-25  AUSWERTUNG_Lauf3.md: Zeilenenden
+       Soll: LF (kein CR)
+             [Quelle: Übergabe S012→S013 §4]
+       Ist:  0 × CR
+       Ergebnis: ✓
+
+VERSAND_Lauf-3.txt: 5787 Bytes · 5680 Zeichen · 128 × LF · 0 × CR · endet mit Zeilenumbruch · sha256 4f9d68e79eae6856ed09f443b70cf4eca1f8950ca12a08b298b3bb0d6eac392e
+  Kopie c835b2ca-VERSAND_Lauf-3.txt: sha256 4f9d68e79eae6856ed09f443b70cf4eca1f8950ca12a08b298b3bb0d6eac392e
+S0-26  VERSAND_Lauf-3.txt: sha256
+       Soll: 4f9d68e79eae6856ed09f443b70cf4eca1f8950ca12a08b298b3bb0d6eac392e
+             [Quelle: Übergabe S012→S013 §4]
+       Ist:  4f9d68e79eae6856ed09f443b70cf4eca1f8950ca12a08b298b3bb0d6eac392e
+       Ergebnis: ✓
+S0-27  VERSAND_Lauf-3.txt: Zeichen und Zeilenumbrüche
+       Soll: 5680 Zeichen · 128 Zeilenumbrüche
+             [Quelle: Übergabe S012→S013 §4]
+       Ist:  5680 Zeichen · 128 Zeilenumbrüche
+       Ergebnis: ✓
+S0-28  VERSAND_Lauf-3.txt: Zeilenenden
+       Soll: LF (kein CR)
+             [Quelle: Übergabe S012→S013 §4]
+       Ist:  0 × CR
+       Ergebnis: ✓
+
+HANDBUCH_Lauf-3-Transportachse.md: 13488 Bytes · 13221 Zeichen · 243 × LF · 0 × CR · endet mit Zeilenumbruch · sha256 a71f0c3072bbbf09c6fcf146d03325428d5d5363bd03a82639cb14bb76011eed
+  Kopie c5fa56eb-HANDBUCH_Lauf-3-Transportachse.md: sha256 a71f0c3072bbbf09c6fcf146d03325428d5d5363bd03a82639cb14bb76011eed
+S0-29  HANDBUCH_Lauf-3-Transportachse.md: sha256
+       Soll: a71f0c3072bbbf09c6fcf146d03325428d5d5363bd03a82639cb14bb76011eed
+             [Quelle: Übergabe S012→S013 §4]
+       Ist:  a71f0c3072bbbf09c6fcf146d03325428d5d5363bd03a82639cb14bb76011eed
+       Ergebnis: ✓
+S0-30  HANDBUCH_Lauf-3-Transportachse.md: Zeichen und Zeilenumbrüche
+       Soll: 13221 Zeichen · 243 Zeilenumbrüche
+             [Quelle: Übergabe S012→S013 §4]
+       Ist:  13221 Zeichen · 243 Zeilenumbrüche
+       Ergebnis: ✓
+S0-31  HANDBUCH_Lauf-3-Transportachse.md: Zeilenenden
+       Soll: LF (kein CR)
+             [Quelle: Übergabe S012→S013 §4]
+       Ist:  0 × CR
+       Ergebnis: ✓
+
+CCR_DELTA_FORCE-PBP-S012.json: 12742 Bytes · 12575 Zeichen · 209 × LF · 0 × CR · endet ohne Zeilenumbruch · sha256 d1628bf347e78f3980199aecb7a7e703af6c3cb1e1c578f8a521b7e9b197713b
+  Kopie 182b4d0e-CCR_DELTA_FORCE-PBP-S012.json: sha256 d1628bf347e78f3980199aecb7a7e703af6c3cb1e1c578f8a521b7e9b197713b
+S0-32  CCR_DELTA_FORCE-PBP-S012.json: sha256
+       Soll: d1628bf347e78f3980199aecb7a7e703af6c3cb1e1c578f8a521b7e9b197713b
+             [Quelle: Übergabe S012→S013 §4]
+       Ist:  d1628bf347e78f3980199aecb7a7e703af6c3cb1e1c578f8a521b7e9b197713b
+       Ergebnis: ✓
+S0-33  CCR_DELTA_FORCE-PBP-S012.json: Zeichen und Zeilenumbrüche
+       Soll: 12575 Zeichen · 209 Zeilenumbrüche
+             [Quelle: Übergabe S012→S013 §4]
+       Ist:  12575 Zeichen · 209 Zeilenumbrüche
+       Ergebnis: ✓
+S0-34  CCR_DELTA_FORCE-PBP-S012.json: Zeilenenden
+       Soll: LF, ohne Zeilenumbruch am Ende
+             [Quelle: Übergabe S012→S013 §4]
+       Ist:  0 × CR, endet ohne Zeilenumbruch
+       Ergebnis: ✓
+
+Information: Beide Ablagen der Anhänge (/mnt/user-data/uploads und die @-Kopien) sind bytegleich.
+
+================================================================================================
+§8 — Teil B des Versandtexts nachgerechnet (R5)
+================================================================================================
+Trennzeile „ABSCHNITT IM AKTUELLEN ZUSTAND — folgt nach dieser Zeile." kommt 1× vor; Teil B = alles danach, 2531 Bytes.
+Teil B ohne genau einen Umbruch am Ende: sha256 f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1
+§2.1 an main über find_section() der Werkzeugfassung an main: 53 Zeilen, sha256 f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1
+S0-35  Trennzeile vor Teil B genau einmal
+       Soll: 1×
+             [Quelle: keine Datei — Voraussetzung dieser Nachrechnung]
+       Ist:  1×
+       Ergebnis: ✓
+S0-36  Teil B nachgerechnet ergibt den context_hash
+       Soll: sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1
+             [Quelle: Übergabe S012→S013 §1, Schritt 1b (Erwartung); HANDBUCH R5]
+       Ist:  sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1
+       Ergebnis: ✓
+S0-37  Teil B bytegleich mit §2.1 an main
+       Soll: bytegleich
+             [Quelle: VERSAND_Lauf-3.txt („ABSCHNITT IM AKTUELLEN ZUSTAND"); Instanz v0.10 PBP-ART-044]
+       Ist:  bytegleich
+       Ergebnis: ✓
+S0-38  Teil B hat 53 Zeilen
+       Soll: 53
+             [Quelle: Übergabe S012→S013 §1, Schritt 0]
+       Ist:  53
+       Ergebnis: ✓
+K-05  Kontrollfall: ohne das Entfernen des letzten Umbruchs passt der Hash nicht
+       Erwartung: anderer Hash als der context_hash
+       Ist:       sha256:47ab621cb3dc24aa…
+       Ergebnis:  wie erwartet
+
+================================================================================================
+§9 — Platzhalter in den Entwürfen
+================================================================================================
+K-06  Kontrollfall: das Suchmuster findet Platzhalter
+       Erwartung: 2 Treffer in „a ⟨START⟩ b ⟨X_Y⟩"
+       Ist:       2 Treffer
+       Ergebnis:  wie erwartet
+AUSWERTUNG_Lauf3.md: 0 Platzhalter
+VERSAND_Lauf-3.txt: 2 Platzhalter — JJJJMMTT ×1 (Zeile 33); START ×1 (Zeile 8)
+HANDBUCH_Lauf-3-Transportachse.md: 16 Platzhalter — JJJJMMTT ×8 (Zeile 31, 98, 139, 142, 143, 156, 160, 161); PR_START ×1 (Zeile 24); SHA_AUSWERTUNG ×1 (Zeile 29); SHA_VERSAND ×1 (Zeile 30); START ×4 (Zeile 24, 161, 173, 225); START7 ×1 (Zeile 4)
+S0-39  AUSWERTUNG_Lauf3.md ohne Platzhalter
+       Soll: keiner
+             [Quelle: Übergabe S012→S013 §1, Schritt 1b: Platzhalter nur in Versandtext und Handbuch]
+       Ist:  0
+       Ergebnis: ✓
+S0-40  Platzhalter in Versandtext und Handbuch
+       Soll: JJJJMMTT, PR_START, SHA_AUSWERTUNG, SHA_VERSAND, START, START7, keine anderen
+             [Quelle: Übergabe S012→S013 §1, Schritt 1b]
+       Ist:  JJJJMMTT, PR_START, SHA_AUSWERTUNG, SHA_VERSAND, START, START7
+       Ergebnis: ✓
+
+================================================================================================
+§10 — Lauf-3-Dateien noch nicht im Repository
+================================================================================================
+$ git cat-file -e main:AUSWERTUNG_Lauf3.md
+  exit 128
+$ git cat-file -e main:VERSAND_Lauf-3.txt
+  exit 128
+$ git cat-file -e main:HANDBUCH_Lauf-3-Transportachse.md
+  exit 128
+$ git log --all --format=%H -- AUSWERTUNG_Lauf3.md VERSAND_Lauf-3.txt HANDBUCH_Lauf-3-Transportachse.md
+  exit 0
+S0-41  keine der drei Lauf-3-Dateien an main oder in einem geholten Ref
+       Soll: nicht vorhanden (cat-file ≠ 0, git log leer)
+             [Quelle: Instanz v0.10 PBP-ART-044 („Entwurf bis zur Versiegelung"); Übergabe §1 Schritt 1]
+       Ist:  cat-file exit [128, 128, 128], git log leer
+       Ergebnis: ✓
+
+================================================================================================
+§11 — Wissensbasis (Layer 1)
+================================================================================================
+Abschrift der Werkzeugausgabe project_info aus diesem Chat, nicht vom Skript gemessen:
+  ULTRA_DATA_SYS_DELTA-FORCE_0_10.md
+  UEBERGABE_PBP-S012_nach_S013.md
+  ULTRA_PROTOCOL_SYS_COMMIT_RUNTIME_1_0.md
+  ULTRA_REF_SYS_REGISTRY_RUNTIME_1_0.md
+  ULTRA_PROTOCOL_SYS_INIT_RUNTIME_1_0.md
+  ULTRA_PROTOCOL_SYS_PBP_1_2.md
+  ULTRA_PROTOCOL_SYS_CCR_1_4.md
+S0-42  Layer 1 der Wissensbasis
+       Soll: genau die sieben Dateien aus Übergabe §2, GESAMT 7 / 12
+             [Quelle: Übergabe S012→S013 §2, Layer 1]
+       Ist:  7 Dateien, gleich der Liste
+       Ergebnis: ✓
+Nicht gemessen: ob die Dateien der Wissensbasis bytegleich mit den Archivfassungen sind — die
+Wissensbasis liefert Text, keine Bytes (Übergabe §5, §6).
+
+================================================================================================
+§12 — Aussagen, die mit der Versiegelung unveränderlich werden
+================================================================================================
+Über die Liste in Übergabe §1 hinaus gemessen: AUSWERTUNG_Lauf3.md wird mit Schritt 1a, Versandtext
+und Handbuch mit 1c versiegelt; danach lässt sich an ihnen nichts mehr berichtigen.
+$ git show 47bc2c2:AUSWERTUNG_Lauf1.md > /tmp/claude-0/-home-claude/d4b90973-e897-5562-a754-c757c3acfa92/scratchpad/s013/auswertung_lauf1_47bc2c2.md
+  exit 0
+$ git show 0221334:AUSWERTUNG_Lauf2.md > /tmp/claude-0/-home-claude/d4b90973-e897-5562-a754-c757c3acfa92/scratchpad/s013/auswertung_lauf2_0221334.md
+  exit 0
+Auswahlregel Lauf 1 (47bc2c2): 192 Zeichen, sha256 fe3b9c544d18b1c1e35ae090afd2c5f3f183cdaa86999b709e645812292b7d86
+Auswahlregel Lauf 2 (0221334): 192 Zeichen, sha256 fe3b9c544d18b1c1e35ae090afd2c5f3f183cdaa86999b709e645812292b7d86
+Auswahlregel Lauf 3 (Anhang): 192 Zeichen, sha256 fe3b9c544d18b1c1e35ae090afd2c5f3f183cdaa86999b709e645812292b7d86
+S0-43  Auswahlregel in AUSWERTUNG_Lauf3.md §1 wortgleich mit Lauf 1 und Lauf 2
+       Soll: wortgleich, dreimal derselbe Text
+             [Quelle: AUSWERTUNG_Lauf3.md §1 („Wortgleich mit …"); Instanz v0.10 §2.3 [S012] Auswahlregel]
+       Ist:  wortgleich
+       Ergebnis: ✓
+$ git log --format=%H main -- AUSWERTUNG_Lauf1.md
+  47bc2c2dd9d1bcc27b757ec080acea75289e20a4
+  exit 0
+$ git log --format=%H main -- AUSWERTUNG_Lauf2.md
+  02213342248ff51caac3cf20492ce487004e8f18
+  exit 0
+S0-44  die in §1 genannten Commits sind die einzigen auf diesen Dateien
+       Soll: AUSWERTUNG_Lauf1.md nur 47bc2c2 · AUSWERTUNG_Lauf2.md nur 0221334
+             [Quelle: AUSWERTUNG_Lauf3.md §1; Instanz v0.10 §2.3 (47bc2c2 „seither unverändert", 0221334 versiegelt)]
+       Ist:  47bc2c2 · 0221334
+       Ergebnis: ✓
+
+$ git show main:VERSAND_Lauf-2.txt > /tmp/claude-0/-home-claude/d4b90973-e897-5562-a754-c757c3acfa92/scratchpad/s013/versand_lauf2_main.txt
+  exit 0
+$ diff /tmp/claude-0/-home-claude/d4b90973-e897-5562-a754-c757c3acfa92/scratchpad/s013/versand_lauf2_main.txt /mnt/user-data/uploads/VERSAND_Lauf-3.txt
+  8c8
+  <   base_sha        : 76b33f9d82ce8c0b56e510abd1a95ba1d21b2817
+  ---
+  >   base_sha        : ⟨START⟩
+  10a11
+  >   expected_lines.after  : 50
+  32c33
+  <   "delta_id": "ULTRA-Δ-20260919-004",
+  ---
+  >   "delta_id": "ULTRA-Δ-⟨JJJJMMTT⟩-005",
+  49c50
+  <     "expected_lines": { "before": 53, "after": <Zahl> }
+  ---
+  >     "expected_lines": { "before": 53, "after": 50 }
+  70,71c71,73
+  <   - expected_lines.after muss stimmen. Rechne: 53 minus gelöschte plus
+  <     neue Zeilen. Zähle nach, schätze nicht.
+  ---
+  >   - delta_id und expected_lines übernimmst du wie alle Ankerwerte unverändert
+  >     (expected_lines: before 53, after 50). Ergibt deine Änderung nicht genau
+  >     50 Zeilen, wird sie abgelehnt.
+  exit 1
+Maskiert (Ankerwerte, delta_id, expected_lines, vierte Regel): Lauf 2 ok, Lauf 3 ok
+S0-45  Versandtext Lauf 2 → Lauf 3 außerhalb der erklärten Stellen wortgleich (darin Aufgabe und Teil B)
+       Soll: wortgleich außer Ankerwerten, delta_id, expected_lines im Ausgabeformat und vierter Regel
+             [Quelle: AUSWERTUNG_Lauf3.md §4 (Gewollt: Zielzahl im Anker, vierte Regel mit delta_id; Unvermeidlich: Anker und delta_id neu; Unverändert: Aufgabe wortgleich, Abschnitt)]
+       Ist:  wortgleich
+       Ergebnis: ✓
+ANKER Lauf 2: {'document': 'TESTGEGENSTAND_TRANSPORTACHSE_01.md', 'section_heading': '### 2.1 Schicht-Architektur', 'base_sha': '76b33f9d82ce8c0b56e510abd1a95ba1d21b2817', 'context_hash': 'sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1', 'expected_lines.before': '53'}
+ANKER Lauf 3: {'document': 'TESTGEGENSTAND_TRANSPORTACHSE_01.md', 'section_heading': '### 2.1 Schicht-Architektur', 'base_sha': '⟨START⟩', 'context_hash': 'sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1', 'expected_lines.before': '53', 'expected_lines.after': '50'}
+S0-46  Anker Lauf 2 → Lauf 3: Dokument, Überschrift, context_hash und 53 Zeilen gleich; neu die Zielzahl 50
+       Soll: 4 Werte gleich · expected_lines.after = 50 nur in Lauf 3 · base_sha verschieden
+             [Quelle: AUSWERTUNG_Lauf3.md §4 („Abschnitt (53 Zeilen, context_hash wie in Lauf 2)", Zielzahl 50 als Ankerwert)]
+       Ist:  4 gleich (document, section_heading, context_hash, expected_lines.before) · after = 50 (Lauf 2: fehlt) · base_sha 76b33f9 → ⟨START⟩
+       Ergebnis: ✓
+K-07  Kontrollfall: die maskierte Gegenüberstellung bemerkt ein geändertes Zeichen in Teil B
+       Erwartung: ungleich
+       Ist:       ungleich
+       Ergebnis:  wie erwartet
+
+$ git merge-base --is-ancestor db543e332474bb4ccd24ad0ee9e231218e42e3e1 main
+  exit 1
+S0-47  Anwendung aus Lauf 2 (db543e3) nicht auf main
+       Soll: kein Vorfahre von main (exit 1)
+             [Quelle: AUSWERTUNG_Lauf3.md §3 („Lauf 2 zählt nicht (Klasse D, kein Merge)"); Instanz v0.10 PBP-ART-035]
+       Ist:  exit 1
+       Ergebnis: ✓
+
+§2.1 an main, Zeilen nach der Zählung in Handbuch §5 (Überschrift = Zeile 1):
+   1 │### 2.1 Schicht-Architektur
+   2 │
+   3 │*Delta `ULTRA-Δ-20260912-001` NICHT angewendet — auf `rejected` gesetzt (PBP-ART-009).
+   4 │Die zwei Statuszeilen, die es korrigieren sollte, stehen seit v0.3 korrekt.*
+   5 │
+   6 │```
+  22 │  ULTRA_PROTOCOL_SYS_EVOLUTION_1_3.md
+  23 │  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 korrekturbedürftig, s. Sektion 1
+  24 │  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← v1.0.1, vier Befunde PBP-ART-010
+  25 │  ULTRA_PROTOCOL_SYS_WARTUNG_1_3.md          (v1.3.10 — Δ-DF-01 angewendet 2026-08-31)
+  32 │  ULTRA_PROTOCOL_SYS_ITA_1_2.md
+  33 │  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §1 hat seit S006 zwei
+  34 │                                               gemessene Befunde, §3–§6 weiter unbelegt]
+  35 │
+  36 │SCHICHT 3 — Archiv (niemals Standard-Session):
+  47 │  metaposition.md · metaposition_nachtrag.md ·
+  48 │  UEBERGABE_PBP-S005_nach_S006.md — archiviert (Owner-Entscheid 2026-09-15).
+  49 │```
+  50 │
+S0-48  Zeilentabelle in Handbuch §5 passt zu §2.1 an main
+       Soll: Notiz mit Leerzeilen 2–5 · Vermerke 23, 24, 33+34 · letzter Eintrag unter SCHICHT 3 in Zeile 48
+             [Quelle: HANDBUCH_Lauf-3-Transportachse.md §5, Entwurf; Aufgabe in VERSAND_Lauf-3.txt]
+       Ist:  passt
+       Ergebnis: ✓
+
+================================================================================================
+§13 — Zusatz, ohne Prüfung
+================================================================================================
+Regelliste für main über die GitHub-API: Die Anfrage an api.github.com (rules/branches/main)
+wurde vom Proxy dieser Sitzung mit HTTP 403 abgewiesen (GitHub-Zugriff für dieses Repository in
+der Sitzung nicht freigegeben). Nicht umgangen; Zugangsdaten wurden nicht angefordert, weil in
+das Repository nur der Owner schreibt. Der Punkt bleibt offen wie in S011 und S012.
+
+================================================================================================
+§14 — Klon nach der Messung
+================================================================================================
+$ git status --porcelain --ignored
+  exit 0
+__pycache__ im Klon: keiner
+S0-49  Arbeitsverzeichnis des Klons unverändert
+       Soll: leer, kein __pycache__
+             [Quelle: Übergabe S012→S013 §7, M-11]
+       Ist:  leer, kein __pycache__
+       Ergebnis: ✓
+
+================================================================================================
+Schluss
+================================================================================================
+Prüfungen: 49 von 49 ohne Abweichung.
+Abweichungen: keine
+Kontrollfälle: 7 von 7 wie erwartet
+Nicht im Protokoll, weil außerhalb von Schritt 0: check-Proben mit dem Anker von Lauf 3 — sie
+gehören zu Handbuch §3 Schritt 0, nach der Versiegelung.
+Vor der ersten Ausgabe berichtigt oder ergänzt (Selbstauskunft der KI): die Anzeige von K-01 (ein
+doppeltes „exit 0"), drei Quellenangaben (S0-10, S0-35, S0-37) und §12. Weil jeder Lauf den Klon um
+den Ref origin/pr/9 ergänzt, klont das Skript jetzt bei jedem Lauf frisch. Die Messwerte von S0-01
+bis S0-42 sind gleich wie im ersten Lauf.
+
+*messung_S013_schritt0.txt | Messprotokoll Schritt 0 | PBP-S013 | Owner: Co-Creator*
