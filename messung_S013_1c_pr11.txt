@@ -1,0 +1,160 @@
+messung_S013_1c_pr11.txt — PBP-S013, Schritt 1c: Pull Request #11 vor dem Merge gemessen
+Erstellt: 2026-09-30T12:25:00Z (UTC) · Prüfdatum für Quellenangaben: 2026-09-30
+Rolle: Analyst (P1) · Steuerungs-Chat · frischer Klon, nur lesend
+$ git clone https://github.com/andreasborchmann/delta /home/claude/andreasborchmann/delta-s013-1c-20260930T122500Z
+  Cloning into '/home/claude/andreasborchmann/delta-s013-1c-20260930T122500Z'...
+  exit 0
+Anlass: Der Owner meldet, dass „Files changed" in PR #11 zwei andere Dateien zeigt als erwartet.
+
+================================================================================================
+§1 — Stand auf dem Server
+================================================================================================
+$ git ls-remote origin
+  4efdce9eec95ea82bd57e485e15e67aa608c89a0	HEAD
+  e3a6c1a03d155e8c715b2bd1994c18be9bc4ea53	refs/heads/andreasborchmann-patch-1
+  8fb07d8f89cfce9087b9cd960c6b21f542845a51	refs/heads/andreasborchmann-patch-2
+  db543e332474bb4ccd24ad0ee9e231218e42e3e1	refs/heads/delta/20260919-004
+  4efdce9eec95ea82bd57e485e15e67aa608c89a0	refs/heads/main
+  83ab88c2ce74c7fcd8f8fa890996de3b843d7de1	refs/pull/1/head
+  47e944e5a438fe98b179d3b675846a11860d542c	refs/pull/10/head
+  8fb07d8f89cfce9087b9cd960c6b21f542845a51	refs/pull/11/head
+  8cdf29a2465fd332cf192d3ba3a96e687db70b85	refs/pull/11/merge
+  22fada93c48b5f631143749d8d83553b4ce67a11	refs/pull/2/head
+  84e6474b92d039938a480fac11ddfbbfc51cab67	refs/pull/3/head
+  ad2f3d92f834a25c8310a745931eb876cddf84f8	refs/pull/4/head
+  962ea3cb7b20b999cc6c9427410c73e3b18f6fdb	refs/pull/5/head
+  02213342248ff51caac3cf20492ce487004e8f18	refs/pull/6/head
+  c82dc7d5517e0e7531ff5e18d0fad47b727d9ccf	refs/pull/7/head
+  4924519fbbea4cdc0dd69d1097d890e2856400b4	refs/pull/8/head
+  db543e332474bb4ccd24ad0ee9e231218e42e3e1	refs/pull/9/head
+  exit 0
+1C-01  main unverändert bei <START> — nichts gemergt
+       Soll: 4efdce9eec95ea82bd57e485e15e67aa608c89a0
+             [Quelle: messung_S013_1b.txt 1B-01; Meldung und Screenshot des Owners zu PR #11, 30.09. (PR #11 offen)]
+       Ist:  4efdce9eec95ea82bd57e485e15e67aa608c89a0
+       Ergebnis: ✓
+1C-02  Pull Request #11 zeigt auf den gemeldeten Commit
+       Soll: 8fb07d8f89cfce9087b9cd960c6b21f542845a51
+             [Quelle: Meldung und Screenshot des Owners zu PR #11, 30.09.]
+       Ist:  8fb07d8f89cfce9087b9cd960c6b21f542845a51
+       Ergebnis: ✓
+1C-03  Branches auf dem Server
+       Soll: andreasborchmann-patch-2 (offener PR), delta/20260919-004, main
+             [Quelle: Meldung und Screenshot des Owners zu PR #11, 30.09. („from andreasborchmann-patch-2"); messung_S013_1b.txt 1B-02]
+       Ist:  andreasborchmann-patch-1, andreasborchmann-patch-2, delta/20260919-004, main
+       Ergebnis: ✗ ABWEICHUNG
+
+================================================================================================
+§2 — Der Commit in Pull Request #11
+================================================================================================
+$ git fetch origin +refs/pull/11/head:refs/remotes/origin/pr/11
+  [stderr]
+  From https://github.com/andreasborchmann/delta
+   * [new ref]         refs/pull/11/head -> origin/pr/11
+  exit 0
+$ git log -1 --format='%H%n%P%n%s%n%an%n%aI' refs/remotes/origin/pr/11
+  8fb07d8f89cfce9087b9cd960c6b21f542845a51
+  4efdce9eec95ea82bd57e485e15e67aa608c89a0
+  Handbuch und Auftragspaket Lauf 3, vor Versand, wie c82dc7d in Lauf 2, ohne delta_id
+  andreasborchmann
+  2026-09-30T14:11:30+02:00
+  exit 0
+1C-04  Upload-Commit auf <START> angelegt, ein Elternteil
+       Soll: 4efdce9
+             [Quelle: Antwort zu 1b, Handgriff 2]
+       Ist:  4efdce9
+       Ergebnis: ✓
+$ git diff --name-status 4efdce9 refs/remotes/origin/pr/11
+  A	mess_s013_schritt0.py
+  A	messung_S013_schritt0.txt
+  exit 0
+1C-05  Pull Request bringt genau die zwei gefüllten Dateien
+       Soll: A  HANDBUCH_Lauf-3-Transportachse.md · A  VERSAND_Lauf-3.txt
+             [Quelle: Antwort zu 1b, Handgriffe 2 und 3]
+       Ist:  A  mess_s013_schritt0.py · A  messung_S013_schritt0.txt
+       Ergebnis: ✗ ABWEICHUNG
+1C-06  nichts unter artefakte/, alles im Wurzelverzeichnis
+       Soll: keine Datei unter artefakte/ oder in einem Ordner
+             [Quelle: HANDBUCH R2; Antwort zu 1b, Handgriff 3]
+       Ist:  alle im Wurzelverzeichnis
+       Ergebnis: ✓
+
+================================================================================================
+§3 — Bytes der hochgeladenen Dateien gegen die gelieferten
+================================================================================================
+Zusatz: Weil die hochgeladenen Dateien ebenfalls aus diesem Chat stammen, zeigt der Vergleich, ob der
+Weg Chat → Rechner → GitHub die Bytes verändert (die Frage hinter Entscheidung 2).
+$ git show refs/remotes/origin/pr/11:mess_s013_schritt0.py > /tmp/claude-0/-home-claude/d4b90973-e897-5562-a754-c757c3acfa92/scratchpad/s013/1c/mess_s013_schritt0.py
+  exit 0
+$ sha256sum /tmp/claude-0/-home-claude/d4b90973-e897-5562-a754-c757c3acfa92/scratchpad/s013/1c/mess_s013_schritt0.py
+  f8cd2e49eea8eeb0efbfdc838de4290789e1eacfdd86301f9ac4a5b1b9a06d08  /tmp/claude-0/-home-claude/d4b90973-e897-5562-a754-c757c3acfa92/scratchpad/s013/1c/mess_s013_schritt0.py
+  exit 0
+1C-07  mess_s013_schritt0.py: bytegleich mit der in diesem Chat gelieferten Datei
+       Soll: f8cd2e49eea8eeb0efbfdc838de4290789e1eacfdd86301f9ac4a5b1b9a06d08
+             [Quelle: sha256 der gelieferten Dateien, gemessen vor der Auslieferung (Antworten zu Schritt 0 und 1b)]
+       Ist:  f8cd2e49eea8eeb0efbfdc838de4290789e1eacfdd86301f9ac4a5b1b9a06d08
+       Ergebnis: ✓
+$ git show refs/remotes/origin/pr/11:messung_S013_schritt0.txt > /tmp/claude-0/-home-claude/d4b90973-e897-5562-a754-c757c3acfa92/scratchpad/s013/1c/messung_S013_schritt0.txt
+  exit 0
+$ sha256sum /tmp/claude-0/-home-claude/d4b90973-e897-5562-a754-c757c3acfa92/scratchpad/s013/1c/messung_S013_schritt0.txt
+  36396edc516a63c7198891c1c8a220e96d358645fd6d2cc80f9e89ef8a4e869e  /tmp/claude-0/-home-claude/d4b90973-e897-5562-a754-c757c3acfa92/scratchpad/s013/1c/messung_S013_schritt0.txt
+  exit 0
+1C-08  messung_S013_schritt0.txt: bytegleich mit der in diesem Chat gelieferten Datei
+       Soll: 36396edc516a63c7198891c1c8a220e96d358645fd6d2cc80f9e89ef8a4e869e
+             [Quelle: sha256 der gelieferten Dateien, gemessen vor der Auslieferung (Antworten zu Schritt 0 und 1b)]
+       Ist:  36396edc516a63c7198891c1c8a220e96d358645fd6d2cc80f9e89ef8a4e869e
+       Ergebnis: ✓
+
+================================================================================================
+§3a — Branches, die in 1C-03 nicht erwartet waren (Befund, ohne Sollwert)
+================================================================================================
+$ git log -3 --format=… refs/remotes/origin/andreasborchmann-patch-1
+  e3a6c1a03d155e8c715b2bd1994c18be9bc4ea53
+    Eltern: 4efdce9eec95ea82bd57e485e15e67aa608c89a0
+    Betreff: Handbuch und Auftragspaket Lauf 3, vor Versand, wie c82dc7d in Lauf 2, ohne delta_id
+    Autor-Zeit: 2026-09-30T14:09:31+02:00
+  4efdce9eec95ea82bd57e485e15e67aa608c89a0
+    Eltern: 6bd45a3928a520acee74e7d091bc839fb6585efa 47e944e5a438fe98b179d3b675846a11860d542c
+    Betreff: Merge pull request #10 from andreasborchmann/andreasborchmann-patch-1
+    Autor-Zeit: 2026-09-30T12:35:27+02:00
+  47e944e5a438fe98b179d3b675846a11860d542c
+    Eltern: 6bd45a3928a520acee74e7d091bc839fb6585efa
+    Betreff: Auswertungsschluessel Lauf 3, vor Versand, ohne delta_id
+    Autor-Zeit: 2026-09-30T12:30:19+02:00
+  exit 0
+$ git merge-base --is-ancestor 4efdce9 refs/remotes/origin/andreasborchmann-patch-1
+  exit 0
+$ git diff --name-status 4efdce9 refs/remotes/origin/andreasborchmann-patch-1
+  A	mess_s013_schritt0.py
+  A	messung_S013_schritt0.txt
+  exit 0
+$ git show refs/remotes/origin/andreasborchmann-patch-1:mess_s013_schritt0.py > /tmp/claude-0/-home-claude/d4b90973-e897-5562-a754-c757c3acfa92/scratchpad/s013/1c/u_mess_s013_schritt0.py
+  exit 0
+  mess_s013_schritt0.py: 36729 Bytes · sha256 f8cd2e49eea8eeb0efbfdc838de4290789e1eacfdd86301f9ac4a5b1b9a06d08 · bytegleich mit der gelieferten Datei
+$ git show refs/remotes/origin/andreasborchmann-patch-1:messung_S013_schritt0.txt > /tmp/claude-0/-home-claude/d4b90973-e897-5562-a754-c757c3acfa92/scratchpad/s013/1c/u_messung_S013_schritt0.txt
+  exit 0
+  messung_S013_schritt0.txt: 38001 Bytes · sha256 36396edc516a63c7198891c1c8a220e96d358645fd6d2cc80f9e89ef8a4e869e · bytegleich mit der gelieferten Datei
+$ git for-each-ref refs/remotes/origin/pr
+  refs/remotes/origin/pr/11 8fb07d8f89cfce9087b9cd960c6b21f542845a51
+  exit 0
+Ein Pull Request mit diesem Branch als Head ist unter refs/pull/*/head nicht vorhanden.
+
+================================================================================================
+§4 — Klon nach der Messung
+================================================================================================
+$ git status --porcelain --ignored
+  exit 0
+1C-09  Arbeitsverzeichnis des Klons unverändert
+       Soll: leer
+             [Quelle: Übergabe S012→S013 §7, M-11]
+       Ist:  leer
+       Ergebnis: ✓
+
+================================================================================================
+Schluss
+================================================================================================
+Prüfungen: 7 von 9 ohne Abweichung. Abweichungen: 1C-03, 1C-05
+Befunde: 1C-05 (andere Dateien im Pull Request als erwartet); 1C-03 (Branch, der nicht erwartet war,
+vermessen in §3a). Nicht gemergt — main steht bei <START> (1C-01).
+
+*messung_S013_1c_pr11.txt | Messprotokoll Schritt 1c, PR #11 | PBP-S013 | Owner: Co-Creator*
