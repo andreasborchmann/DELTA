@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
 deltakit — minimales, deterministisches Delta-Werkzeug fuer DELTA-FORCE.
+Fassung S014 (PBP-S014, 2026-10-06): Inhaltspruefung gegen einen vorgegebenen Zieltext; Luecken
+W-1 bis W-5, 1b-4, 1b-5 und 1b-9 behoben; Kontrollfaelle in engine/kontrollfaelle.json.
 
 Ersetzt die Schreibseite von ULTRA_REF_SYS_DELTA_ENGINE_1_0.md.
 Kein Modell im Schreibpfad. Kein input()-Gate. Keine Zeilenoffsets aus einer Vorschau.
@@ -14,29 +16,51 @@ Bewusste Abweichung (1 Stueck, deklariert):
   -> Solange DELTA 1.1 nicht nachgezogen ist, ist dieses Werkzeug strenger als sein
      Protokoll. Divergenz hier genannt statt verdeckt.
 
-Subkommandos:
-  check    <delta.json> [--repo DIR]   Fail-closed Pruefung. Exit 0 = anwendbar.
-  render   <delta.json> [--repo DIR] [--write]   Neue Bytes erzeugen (stdout oder Datei).
-  pr-body  <delta.json> [--repo DIR]   Markdown fuer den PR-Body.
-  selftest [--corpus DIR ...]          Regressionssuite der Leseseite (R-2).
+Inhaltspruefung (seit Fassung S014, Typ I — Argument des Werkzeugs, kein Feld im Auftragsformat):
+  check, render und pr-body verlangen --zieltext DATEI oder ausdruecklich --ohne-inhalt.
+  Mit --zieltext muss der Abschnitt nach dem Delta bytegenau dem Zieltext gleichen. Die Datei traegt
+  den Abschnitt wortgetreu, Ueberschrift zuerst, genau ein Zeilenumbruch am Ende.
+  Fehlt beides, endet der Aufruf mit 3: Fehlender Schutz darf kein Default sein.
 
-Exit-Codes: 0 ok · 2 abgelehnt (Grund auf stderr) · 3 Bedienfehler.
+Subkommandos:
+  check    <delta.json> (--zieltext DATEI | --ohne-inhalt) [--repo DIR]   Fail-closed Pruefung. Exit 0 = anwendbar.
+  render   <delta.json> (--zieltext DATEI | --ohne-inhalt) [--repo DIR] [--write]   Neue Bytes erzeugen.
+  pr-body  <delta.json> (--zieltext DATEI | --ohne-inhalt) [--repo DIR]   Markdown fuer den PR-Body; liest HEAD.
+  hash     <dokument> --heading H [--repo DIR]   Anker-Paket fuer den Delta-Autor; auch absolute Pfade.
+  verify   <delta.json> [--repo DIR] [--head REF] [--max-lines N]   Nach-Audit, byteweise.
+  audit    [--repo DIR] [--start SHA] [--head REF] [--deltas DIR] [--artefacts PFAD]   Gate-Abdeckung.
+  selftest [--corpus DIR ...] [--kontrollfaelle DATEI] [--repo DIR] [--nur-leseseite]   Leseseite und Kontrollfaelle.
+
+Exit-Codes: 0 ok · 2 abgelehnt oder Befund (Grund auf stderr) · 3 Bedienfehler. Nie 1.
+Zeilenenden: Gelesen und geschrieben werden Bytes. Dateien mit Windows-Zeilenenden lehnt das Werkzeug
+ab, statt sie still umzuschreiben.
 """
 from __future__ import annotations
 
 import argparse
+import difflib
 import hashlib
 import json
+import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
+FASSUNG = "S014"
 SCHEMA_VERSION = "udp-1.0"
 OPERATIONS = {"replace_section", "replace_lines", "insert_after", "append_to_section", "delete"}
+EXIT_OK, EXIT_ABGELEHNT, EXIT_BEDIENFEHLER = 0, 2, 3
+MAX_DIFF = 20
 
 _FENCE = re.compile(r"^(```|~~~)")
 _HEAD = re.compile(r"^#{1,6}\s")
+
+
+class Bedienfehler(Exception):
+    """Fehler im Aufruf oder in einer Eingabe, die nicht das Delta ist. Exit 3."""
 
 
 # ---------------------------------------------------------------- Leseseite
@@ -151,6 +175,10 @@ def render_section(section_text: str, operation: str, payload) -> str | None:
         trailing += 1
     tail = body[len(body) - trailing:] if trailing else []
     core = body[: len(body) - trailing] if trailing else body
+    if operation == "delete":
+        return None
+    if not isinstance(payload, str):
+        raise ValueError(f"{operation} verlangt payload als Text")
     pay = payload.split("\n") if payload else []
 
     if operation == "replace_section":
@@ -162,87 +190,152 @@ def render_section(section_text: str, operation: str, payload) -> str | None:
         new = [heading] + pay + core
     elif operation == "append_to_section":
         new = [heading] + core + pay
-    elif operation == "delete":
-        return None
     else:
         raise ValueError(f"unbekannte operation: {operation}")
     return "\n".join(new + tail)
 
 
-# ------------------------------------------------------------------ Pruefung
+# ------------------------------------------------------------------ Dateien
 
 def _git(repo: Path, *args: str) -> subprocess.CompletedProcess:
-    return subprocess.run(["git", "-C", str(repo), *args],
-                          capture_output=True, text=True)
+    """git mit Bytes. Nie Textmodus: Zeilenenden werden nicht umgewandelt (1b-5)."""
+    return subprocess.run(["git", "-C", str(repo), *args], capture_output=True)
 
 
-def resolve_doc(repo: Path, doc: str) -> tuple[Path | None, str]:
-    """target.document traegt nur den Dateinamen, das Repo hat Ordner.
-    Eindeutiger Treffer oder Ablehnung — nie der erste von mehreren."""
-    direct = repo / doc
-    if direct.is_file():
-        return direct, "ok"
-    name = Path(doc).name
-    hits = [p for p in repo.rglob(name)
-            if p.is_file() and ".git" not in p.parts]
-    if not hits:
-        return None, f"Zieldatei nicht im Repo gefunden: {doc}"
-    if len(hits) > 1:
-        rel = ", ".join(str(p.relative_to(repo)) for p in sorted(hits))
-        return None, f"Zieldatei mehrdeutig ({len(hits)} Treffer): {rel}"
-    return hits[0], "ok"
+def _git_text(repo: Path, *args: str) -> tuple[int, str, str]:
+    r = _git(repo, *args)
+    return r.returncode, r.stdout.decode("utf-8", "replace"), r.stderr.decode("utf-8", "replace")
 
 
-def _show(repo: Path, ref: str, relpath: str) -> str | None:
+def _show(repo: Path, ref: str, relpath: str) -> bytes | None:
     r = _git(repo, "show", f"{ref}:{relpath}")
     return r.stdout if r.returncode == 0 else None
 
 
-def check(delta: dict, repo: Path) -> tuple[bool, list[str], dict]:
-    """Fail-closed. Jede Unklarheit ist eine Ablehnung, keine Warnung."""
+def _text(raw: bytes) -> str | None:
+    """UTF-8 ohne Umwandlung der Zeilenenden; None, wenn es kein UTF-8 ist."""
+    try:
+        return raw.decode("utf-8")
+    except UnicodeDecodeError:
+        return None
+
+
+def resolve_doc(repo: Path, doc: str) -> tuple[Path | None, str | None, str]:
+    """target.document traegt meist nur den Dateinamen, das Repo hat Ordner.
+    Eindeutiger Treffer oder Ablehnung — nie der erste von mehreren.
+    Gibt (absoluter Pfad, Pfad relativ zum Repo, Grund) zurueck. Absolute Pfade gehen auch (W-5)."""
+    basis = repo.resolve()
+    p = Path(doc)
+    direct = p if p.is_absolute() else basis / p
+    if direct.is_file():
+        try:
+            rel = direct.resolve().relative_to(basis)
+        except ValueError:
+            return None, None, f"Pfad liegt nicht im Repository: {doc}"
+        return direct.resolve(), rel.as_posix(), "ok"
+    name = p.name
+    hits = [q for q in basis.rglob(name)
+            if q.is_file() and ".git" not in q.relative_to(basis).parts]
+    if not hits:
+        return None, None, f"Zieldatei nicht im Repo gefunden: {doc}"
+    if len(hits) > 1:
+        rel = ", ".join(q.relative_to(basis).as_posix() for q in sorted(hits))
+        return None, None, f"Zieldatei mehrdeutig ({len(hits)} Treffer): {rel}"
+    return hits[0], hits[0].relative_to(basis).as_posix(), "ok"
+
+
+# ------------------------------------------------------------------ Pruefung
+
+def _ist_int(v) -> bool:
+    return isinstance(v, int) and not isinstance(v, bool)
+
+
+def _diff_zeilen(soll: str, ist: str, links: str = "ZIELTEXT", rechts: str = "NACH DEM DELTA") -> list[str]:
+    d = list(difflib.unified_diff(soll.split("\n"), ist.split("\n"), links, rechts, lineterm="", n=0))
+    if len(d) > MAX_DIFF:
+        d = d[:MAX_DIFF] + [f"… {len(d) - MAX_DIFF} weitere Zeilen"]
+    return d
+
+
+def check(delta, repo: Path, ziel: str | None = None, quelle: str = "arbeitsbaum") -> tuple[bool, list[str], dict]:
+    """Fail-closed. Jede Unklarheit ist eine Ablehnung, keine Warnung.
+    ziel: Zieltext des Abschnitts (Inhaltspruefung) oder None (ausdruecklich ohne).
+    quelle: "arbeitsbaum" liest die Zieldatei aus dem Arbeitsbaum, "HEAD" aus Git (fuer pr-body, 1b-9)."""
     reasons: list[str] = []
-    ctx: dict = {}
+    ctx: dict = {"details": []}
+    if not isinstance(delta, dict):
+        return False, ["Delta ist kein JSON-Objekt"], ctx
 
     if delta.get("schema_version") != SCHEMA_VERSION:
         reasons.append(f"schema_version != {SCHEMA_VERSION}")
-    if not delta.get("delta_id"):
+    did = delta.get("delta_id")
+    if not (isinstance(did, str) and did):
         reasons.append("delta_id fehlt")
     op = delta.get("operation")
-    if op not in OPERATIONS:
+    op_gueltig = isinstance(op, str) and op in OPERATIONS
+    if not op_gueltig:
         reasons.append(f"operation ungueltig: {op!r}")
     pay = delta.get("payload", "")
+    pay_ok = op_gueltig
     if op == "delete":
         if pay not in ("", [], None):
             reasons.append("delete verlangt leeren payload")
+            pay_ok = False
     elif op == "replace_lines":
         if not isinstance(pay, list) or not pay:
             reasons.append("replace_lines verlangt payload als nicht-leere Liste von {old,new}")
-    elif op in OPERATIONS:
+            pay_ok = False
+    elif op_gueltig:
         if not isinstance(pay, str) or not pay.strip():
             reasons.append("payload leer oder kein Text")
-    if not (delta.get("meta") or {}).get("rationale"):
-        reasons.append("meta.rationale fehlt")
+            pay_ok = False
 
-    exp = (delta.get("meta") or {}).get("expected_lines")
-    if not (isinstance(exp, dict)
-            and isinstance(exp.get("before"), int)
-            and isinstance(exp.get("after"), int)):
+    meta = delta.get("meta")
+    if meta is None:
+        meta = {}
+    if not isinstance(meta, dict):
+        reasons.append("meta ist kein JSON-Objekt")
+        meta = {}
+    rationale = meta.get("rationale")
+    if not (isinstance(rationale, str) and rationale.strip()):
+        reasons.append("meta.rationale fehlt")
+    exp = meta.get("expected_lines")
+    exp_ok = isinstance(exp, dict) and _ist_int(exp.get("before")) and _ist_int(exp.get("after"))
+    if not exp_ok:
         reasons.append("meta.expected_lines {before:int, after:int} fehlt — "
                        "erklaerte Absicht ist Pflicht")
 
-    target = delta.get("target") or {}
+    target = delta.get("target")
+    if target is None:
+        target = {}
+    if not isinstance(target, dict):
+        reasons.append("target ist kein JSON-Objekt")
+        return False, reasons, ctx
     doc, heading = target.get("document"), target.get("section_heading")
-    if not doc or not heading:
+    if not (isinstance(doc, str) and doc) or not (isinstance(heading, str) and heading):
         reasons.append("target.document oder target.section_heading fehlt")
         return False, reasons, ctx
 
-    path, why = resolve_doc(repo, doc)
+    path, rel, why = resolve_doc(repo, doc)
     if path is None:
         reasons.append(why)
         return False, reasons, ctx
-    rel = str(path.relative_to(repo))
 
-    content = path.read_text(encoding="utf-8")
+    if quelle == "HEAD":
+        raw = _show(repo, "HEAD", rel)
+        if raw is None:
+            reasons.append(f"Zieldatei {rel} nicht in HEAD")
+            return False, reasons, ctx
+    else:
+        raw = path.read_bytes()
+    content = _text(raw)
+    if content is None:
+        reasons.append(f"Zieldatei {rel} ist kein UTF-8")
+        return False, reasons, ctx
+    if "\r" in content:
+        reasons.append(f"Zieldatei {rel} enthält Windows-Zeilenenden (CR) — nicht unterstützt; "
+                       "das Werkzeug schreibt sie nicht still um")
+        return False, reasons, ctx
     sec = find_section(content, heading)
     if sec["status"] != "ok":
         reasons.append(f"Abschnitt nicht adressierbar: {sec['reason']}")
@@ -256,37 +349,39 @@ def check(delta: dict, repo: Path) -> tuple[bool, list[str], dict]:
     if not declared:
         reasons.append("context_hash fehlt — fail-closed, keine Anwendung ohne Anker")
     elif declared != actual:
-        reasons.append(f"context_hash veraltet: deklariert {declared[:23]}… "
-                       f"ist {actual[:23]}… — Ziel hat sich bewegt")
+        # beide vollstaendig: Hashes, die sich erst spaet unterscheiden, bleiben unterscheidbar (W-2)
+        reasons.append(f"context_hash veraltet: deklariert {declared} · ist {actual} — Ziel hat sich bewegt")
 
     # --- Zweite Ebene: hat sich die Datei seit base_sha bewegt?
     base = target.get("base_sha")
     if (repo / ".git").exists():
         if not base:
             reasons.append("base_sha fehlt — im Git-Repo Pflicht")
+        elif not isinstance(base, str):
+            reasons.append("base_sha ist kein Text")
         else:
             r = _git(repo, "diff", "--quiet", base, "HEAD", "--", rel)
             if r.returncode == 1:
                 reasons.append(f"Datei seit base_sha {base[:8]} veraendert")
             elif r.returncode not in (0, 1):
-                reasons.append(f"base_sha nicht aufloesbar: {r.stderr.strip()[:80]}")
+                reasons.append("base_sha nicht aufloesbar: "
+                               f"{r.stderr.decode('utf-8', 'replace').strip()[:80]}")
     elif base:
         reasons.append("base_sha angegeben, aber kein Git-Repo")
 
     # --- Operation trocken ausfuehren. Fehler der Operation sind Ablehnungsgruende.
     rendered: str | None = None
     op_ok = False
-    if op in OPERATIONS:
+    if pay_ok:
         try:
-            rendered = render_section(sec["section_text"], op, delta.get("payload", ""))
+            rendered = render_section(sec["section_text"], op, pay)
             op_ok = True
         except ValueError as e:
             reasons.append(str(e))
 
     # --- N-2: erklaerte Absicht gegen gemessene Wirkung.
     # Kein Schwellenwert. Grosse Loeschungen sind erlaubt — undeklarierte nicht.
-    if op_ok and isinstance(exp, dict) and isinstance(exp.get("before"), int) \
-            and isinstance(exp.get("after"), int):
+    if op_ok and exp_ok:
         act_before = len(sec["section_text"].split("\n"))
         act_after = 0 if rendered is None else len(rendered.split("\n"))
         ctx["balance"] = (act_before, act_after)
@@ -294,6 +389,19 @@ def check(delta: dict, repo: Path) -> tuple[bool, list[str], dict]:
             reasons.append(
                 f"Zeilenbilanz weicht von der Deklaration ab: erklaert "
                 f"{exp['before']} -> {exp['after']}, gemessen {act_before} -> {act_after}")
+
+    # --- Inhalt: Abschnitt nach dem Delta gegen den vorgegebenen Zieltext (Fassung S014).
+    if ziel is not None:
+        if not op_ok:
+            reasons.append("Inhalt nicht prüfbar: die Operation scheitert (s. oben)")
+        elif rendered is None:
+            reasons.append("Inhalt nicht prüfbar: delete entfernt den Abschnitt")
+        elif rendered != ziel:
+            reasons.append(f"Inhalt weicht vom Zieltext ab: Zieltext {compute_section_hash(ziel)} · "
+                           f"Ergebnis {compute_section_hash(rendered)}")
+            ctx["details"] = _diff_zeilen(ziel, rendered)
+        else:
+            ctx["inhalt"] = compute_section_hash(ziel)
 
     return (not reasons), reasons, ctx
 
@@ -310,47 +418,116 @@ def render(delta: dict, ctx: dict) -> str:
 
 # --------------------------------------------------------------------- CLI
 
-def _load(p: str) -> dict:
-    return json.loads(Path(p).read_text(encoding="utf-8"))
+class _Parser(argparse.ArgumentParser):
+    """Aufruffehler enden mit 3 (Bedienfehler), nicht mit argparse' 2 (= abgelehnt)."""
+
+    def error(self, message):
+        self.print_usage(sys.stderr)
+        print(f"BEDIENFEHLER: {message}", file=sys.stderr)
+        sys.exit(EXIT_BEDIENFEHLER)
+
+
+def _lade_delta(pfad: str):
+    """(delta, None) oder (None, Grund). Fehlende Datei ist ein Bedienfehler (W-1),
+    eine Datei, die kein JSON ist, ein abgelehntes Delta (1b-4)."""
+    p = Path(pfad)
+    if not p.is_file():
+        raise Bedienfehler(f"Delta-Datei nicht gefunden: {pfad}")
+    text = _text(p.read_bytes())
+    if text is None:
+        return None, "Delta-Datei ist kein UTF-8"
+    try:
+        return json.loads(text), None
+    except json.JSONDecodeError as e:
+        return None, f"kein gültiges JSON: {e}"
+
+
+def _lade_zieltext(a) -> str | None:
+    """None bei --ohne-inhalt; sonst der Zieltext ohne den einen Zeilenumbruch am Ende."""
+    if getattr(a, "ohne_inhalt", False):
+        return None
+    if not getattr(a, "zieltext", None):
+        raise Bedienfehler("Inhaltsprüfung verlangt: --zieltext DATEI angeben oder die Prüfung "
+                           "ausdrücklich mit --ohne-inhalt abschalten")
+    p = Path(a.zieltext)
+    if not p.is_file():
+        raise Bedienfehler(f"Zieltext-Datei nicht gefunden: {a.zieltext}")
+    t = _text(p.read_bytes())
+    if t is None:
+        raise Bedienfehler("Zieltext-Datei ist kein UTF-8")
+    if t.startswith("﻿"):
+        raise Bedienfehler("Zieltext-Datei beginnt mit einer BOM")
+    if "\r" in t:
+        raise Bedienfehler("Zieltext-Datei enthält Windows-Zeilenenden (CR)")
+    if t.endswith("\n"):
+        t = t[:-1]
+    if not _HEAD.match(t.split("\n", 1)[0]):
+        raise Bedienfehler("Zieltext-Datei beginnt nicht mit einer Überschrift")
+    return t
+
+
+def _pruefe_ziel_ueberschrift(ziel: str | None, delta) -> None:
+    if ziel is None or not isinstance(delta, dict) or not isinstance(delta.get("target"), dict):
+        return
+    heading = delta["target"].get("section_heading")
+    erste = ziel.split("\n", 1)[0]
+    if isinstance(heading, str) and erste.rstrip() != heading.rstrip():
+        raise Bedienfehler(f"Zieltext beginnt nicht mit der Überschrift des Deltas: Zieltext „{erste}\", "
+                           f"Delta „{heading}\" — falsche Zieltext-Datei oder geänderter Ankerwert im Delta")
+
+
+def _vorbereiten(a, quelle: str = "arbeitsbaum"):
+    """Gemeinsamer Weg fuer check, render und pr-body: Inhaltsentscheid, Zieltext, Delta, Pruefung."""
+    ziel = _lade_zieltext(a)
+    delta, fehler = _lade_delta(a.delta)
+    if fehler:
+        return None, False, [fehler], {"details": []}, ziel
+    _pruefe_ziel_ueberschrift(ziel, delta)
+    ok, reasons, ctx = check(delta, Path(a.repo), ziel, quelle)
+    return delta, ok, reasons, ctx, ziel
+
+
+def _melde_ablehnung(reasons: list[str], ctx: dict) -> int:
+    for r in reasons:
+        print("ABGELEHNT:", r, file=sys.stderr)
+    for z in ctx.get("details", []):
+        print("  " + z, file=sys.stderr)
+    return EXIT_ABGELEHNT
+
+
+def _inhalt_text(ctx: dict, ziel: str | None) -> str:
+    return f"Inhalt gleich dem Zieltext {ctx['inhalt']}" if ziel is not None \
+        else "ohne Inhaltsprüfung (--ohne-inhalt)"
 
 
 def cmd_check(a) -> int:
-    ok, reasons, _ = check(_load(a.delta), Path(a.repo))
+    _, ok, reasons, ctx, ziel = _vorbereiten(a)
     if ok:
-        print("ok — anwendbar")
-        return 0
-    for r in reasons:
-        print("ABGELEHNT:", r, file=sys.stderr)
-    return 2
+        print(f"ok — anwendbar · {_inhalt_text(ctx, ziel)}")
+        return EXIT_OK
+    return _melde_ablehnung(reasons, ctx)
 
 
 def cmd_render(a) -> int:
-    delta = _load(a.delta)
-    ok, reasons, ctx = check(delta, Path(a.repo))
+    delta, ok, reasons, ctx, ziel = _vorbereiten(a)
     if not ok:
-        for r in reasons:
-            print("ABGELEHNT:", r, file=sys.stderr)
-        return 2
+        return _melde_ablehnung(reasons, ctx)
     out = render(delta, ctx)
     if a.write:
-        ctx["path"].write_text(out, encoding="utf-8")
-        before = len(ctx["section"]["section_text"].split("\n"))
-        after = 0 if delta["operation"] == "delete" else len(
-            render_section(ctx["section"]["section_text"], delta["operation"],
-                           delta.get("payload", "")).split("\n"))
-        print(f"geschrieben: {ctx['path'].name} | Abschnitt {before} -> {after} Zeilen")
+        ctx["path"].write_bytes(out.encode("utf-8"))          # Bytes: kein Umwandeln der Zeilenenden
+        before, after = ctx.get("balance", ("?", "?"))
+        print(f"geschrieben: {ctx['path'].name} | Abschnitt {before} -> {after} Zeilen | "
+              f"{_inhalt_text(ctx, ziel)}")
     else:
         sys.stdout.write(out)
-    return 0
+    return EXIT_OK
 
 
 def cmd_pr_body(a) -> int:
-    delta = _load(a.delta)
-    ok, reasons, ctx = check(delta, Path(a.repo))
+    # Liest die Zieldatei aus HEAD, nicht aus dem Arbeitsbaum: vor und nach render --write gleich (1b-9).
+    delta, ok, reasons, ctx, ziel = _vorbereiten(a, quelle="HEAD")
     if not ok:
-        for r in reasons:
-            print("ABGELEHNT:", r, file=sys.stderr)
-        return 2
+        return _melde_ablehnung(reasons, ctx)
     new_content = render(delta, ctx)
     new_sec = find_section(new_content, delta["target"]["section_heading"])
     new_hash = (compute_section_hash(new_sec["section_text"])
@@ -358,6 +535,7 @@ def cmd_pr_body(a) -> int:
     b = len(ctx["section"]["section_text"].split("\n"))
     aft = "0" if new_sec["status"] != "ok" else len(new_sec["section_text"].split("\n"))
     meta = delta.get("meta") or {}
+    inhalt = f"gleich dem Zieltext `{ctx['inhalt']}`" if ziel is not None else "nicht geprüft (--ohne-inhalt)"
     print(f"""## {delta['delta_id']}
 
 | | |
@@ -369,16 +547,17 @@ def cmd_pr_body(a) -> int:
 | context_hash vorher | `{ctx['hash_actual']}` |
 | context_hash nachher | `{new_hash}` |
 | Zeilenbilanz Abschnitt | **{b} -> {aft}** (so erklaert, so gemessen) |
+| Inhalt | {inhalt} |
 | Autor | {meta.get('author','—')} |
 
 **Rationale.** {meta.get('rationale','—')}
 
 Der Diff unten ist von git berechnet, nicht von diesem Werkzeug erzeugt.
 Human Gate = Merge-Freigabe. Ohne Freigabe bleibt die Aenderung im Branch.""")
-    return 0
+    return EXIT_OK
 
 
-def cmd_selftest(a) -> int:
+def _leseseite(corpus: list[str]) -> bool:
     """Leseseite gegen naive Referenz. Prueft genau das, worauf alles ruht (SUBSTRAT R-2)."""
     def naive(content, heading):
         lines = content.split("\n")
@@ -390,7 +569,7 @@ def cmd_selftest(a) -> int:
                     if _HEAD.match(lines[j])), len(lines))
         return "\n".join(lines[start:end])
 
-    files = [p for d in a.corpus for p in sorted(Path(d).glob("*.md"))]
+    files = [p for d in corpus for p in sorted(Path(d).glob("*.md"))]
     tot = agree = fence_win = refused = 0
     for p in files:
         c = p.read_text(encoding="utf-8")
@@ -415,6 +594,7 @@ def cmd_selftest(a) -> int:
         ("Teilanker", "## 2.1 X\n1\n", "2.1 X",
          lambda r: r["status"] == "fail"),
     ]
+    print("R-06 Leseseite")
     print(f"Korpus: {len(files)} Dateien, {tot} Ueberschriften")
     print(f"  identisch zur naiven Referenz : {agree}")
     print(f"  Fence-bedingt abweichend      : {fence_win}  (deltakit ist hier die sichere Seite)")
@@ -424,58 +604,81 @@ def cmd_selftest(a) -> int:
         good = pred(find_section(doc, head))
         bad += not good
         print(f"  [{'ok ' if good else 'FAIL'}] {name}")
-    return 0 if bad == 0 else 2
+    return bad == 0
 
 
 def cmd_verify(a) -> int:
     """Nach-Audit: Ist im Repository genau das gelandet, was das Delta gesagt hat?
-    Rechnet aus dem base_sha neu und vergleicht byte-weise. Braucht keine Rechte."""
-    import difflib
-    delta = _load(a.delta)
+    Rechnet aus dem base_sha neu und vergleicht Bytes, wie sie im Repository stehen (1b-5)."""
+    delta, fehler = _lade_delta(a.delta)
+    if fehler:
+        print(f"NICHT PRUEFBAR: {fehler}", file=sys.stderr)
+        return EXIT_ABGELEHNT
+    if not isinstance(delta, dict):
+        print("NICHT PRUEFBAR: Delta ist kein JSON-Objekt", file=sys.stderr)
+        return EXIT_ABGELEHNT
     repo = Path(a.repo)
-    t = delta.get("target") or {}
+    t = delta.get("target") if isinstance(delta.get("target"), dict) else {}
     doc, base, heading = t.get("document"), t.get("base_sha"), t.get("section_heading")
-    if not base:
+    if not (isinstance(base, str) and base):
         print("NICHT PRUEFBAR: base_sha fehlt im Delta", file=sys.stderr)
-        return 2
+        return EXIT_ABGELEHNT
+    if not (isinstance(doc, str) and doc and isinstance(heading, str) and heading):
+        print("NICHT PRUEFBAR: target.document oder target.section_heading fehlt", file=sys.stderr)
+        return EXIT_ABGELEHNT
 
-    path, why = resolve_doc(repo, doc)
-    rel = str(path.relative_to(repo)) if path else doc
-    base_content = _show(repo, base, rel)
-    if base_content is None:
+    path, rel, why = resolve_doc(repo, doc)
+    rel = rel or doc
+    base_raw = _show(repo, base, rel)
+    if base_raw is None:
         print(f"NICHT PRUEFBAR: {rel} existiert nicht in {base[:8]}", file=sys.stderr)
-        return 2
+        return EXIT_ABGELEHNT
+    base_content = _text(base_raw)
+    if base_content is None:
+        print(f"NICHT PRUEFBAR: {rel} in {base[:8]} ist kein UTF-8", file=sys.stderr)
+        return EXIT_ABGELEHNT
+    if "\r" in base_content:
+        print(f"BEFUND: {rel} enthält in {base[:8]} Windows-Zeilenenden (CR). Dieses Werkzeug arbeitet "
+              "nur mit LF; eine Anwendung hätte die Datei umgeschrieben.", file=sys.stderr)
+        return EXIT_ABGELEHNT
 
     sec = find_section(base_content, heading)
     if sec["status"] != "ok":
         print(f"NICHT PRUEFBAR: Abschnitt im Basisstand nicht adressierbar "
               f"({sec['reason']})", file=sys.stderr)
-        return 2
+        return EXIT_ABGELEHNT
     base_hash = compute_section_hash(sec["section_text"])
     if t.get("context_hash") and t["context_hash"] != base_hash:
         print(f"BEFUND: context_hash passt nicht zum Basisstand — das Delta wurde "
               f"gegen einen anderen Stand gebaut als gegen {base[:8]}", file=sys.stderr)
-        return 2
+        return EXIT_ABGELEHNT
 
-    rendered = render(delta, {"content": base_content, "section": sec})
-    actual = _show(repo, a.head, rel)
-    if actual is None:
+    try:
+        rendered = render(delta, {"content": base_content, "section": sec})
+    except ValueError as e:
+        print(f"BEFUND: Das Delta laesst sich auf den Basisstand nicht anwenden: {e}", file=sys.stderr)
+        return EXIT_ABGELEHNT
+    actual_raw = _show(repo, a.head, rel)
+    if actual_raw is None:
         print(f"BEFUND: {rel} existiert in {a.head} nicht mehr", file=sys.stderr)
-        return 2
+        return EXIT_ABGELEHNT
 
-    if rendered == actual:
+    if rendered.encode("utf-8") == actual_raw:
         print(f"verifiziert — {rel} in {a.head} ist byte-identisch mit dem, "
               f"was {delta.get('delta_id')} aus {base[:8]} erzeugt")
-        return 0
+        return EXIT_OK
 
     print(f"BEFUND: {rel} weicht ab von dem, was {delta.get('delta_id')} erzeugt haette.",
           file=sys.stderr)
+    actual = actual_raw.decode("utf-8", "replace")
+    if "\r" in actual:
+        print(f"  {rel} enthält in {a.head} Windows-Zeilenenden (CR).", file=sys.stderr)
     d = list(difflib.unified_diff(rendered.split("\n"), actual.split("\n"),
                                   "LAUT DELTA", f"IM REPO ({a.head})", lineterm="", n=1))
     print("\n".join(d[: a.max_lines]), file=sys.stderr)
     if len(d) > a.max_lines:
         print(f"… {len(d) - a.max_lines} weitere Zeilen", file=sys.stderr)
-    return 2
+    return EXIT_ABGELEHNT
 
 
 def cmd_audit(a) -> int:
@@ -483,25 +686,36 @@ def cmd_audit(a) -> int:
     Konvention: die delta_id steht in der Commit-Nachricht."""
     repo = Path(a.repo)
     ids: dict[str, str] = {}
-    for p in sorted(Path(a.deltas).rglob("*.json")) if Path(a.deltas).is_dir() else []:
+    hinweise: list[str] = []
+    dd = Path(a.deltas)
+    for p in sorted(dd.rglob("*.json")) if dd.is_dir() else []:
+        text = _text(p.read_bytes())
         try:
-            d = json.loads(p.read_text(encoding="utf-8"))
-        except Exception:
+            if text is None:
+                raise ValueError("kein UTF-8")
+            d = json.loads(text)
+        except ValueError:                      # JSONDecodeError ist ein ValueError
+            hinweise.append(f"übersprungen (kein gültiges JSON): {p}")
             continue
-        if d.get("delta_id"):
-            ids[d["delta_id"]] = (d.get("target") or {}).get("document", "?")
+        if not isinstance(d, dict):
+            hinweise.append(f"übersprungen (kein JSON-Objekt): {p}")
+            continue
+        did = d.get("delta_id")
+        if isinstance(did, str) and did:
+            tgt = d.get("target")
+            ids[did] = tgt.get("document", "?") if isinstance(tgt, dict) else "?"
 
     rng = f"{a.start}..{a.head}" if a.start else a.head
-    r = _git(repo, "log", "--format=%H%x1f%s", "--reverse", rng, "--", a.artefacts)
-    if r.returncode != 0:
-        print("git log fehlgeschlagen:", r.stderr.strip()[:160], file=sys.stderr)
-        return 3
-    rows = [l.split("\x1f", 1) for l in r.stdout.splitlines() if l.strip()]
+    code, out, err = _git_text(repo, "log", "--format=%H%x1f%s", "--reverse", rng, "--", a.artefacts)
+    if code != 0:
+        print("git log fehlgeschlagen:", err.strip()[:160], file=sys.stderr)
+        return EXIT_BEDIENFEHLER
+    rows = [l.split("\x1f", 1) for l in out.splitlines() if l.strip()]
 
     covered, naked = [], []
     for sha, subject in rows:
         hit = next((i for i in ids if i in subject), None)
-        files = _git(repo, "show", "--name-only", "--format=", sha).stdout.split()
+        files = _git_text(repo, "show", "--name-only", "--format=", sha)[1].split()
         (covered if hit else naked).append((sha[:8], hit, subject, files))
 
     print(f"Bereich: {rng} | Pfad: {a.artefacts}/ | Deltas bekannt: {len(ids)}")
@@ -516,52 +730,226 @@ def cmd_audit(a) -> int:
     unused = [i for i in ids if not any(h == i for _, h, _, _ in covered)]
     if unused:
         print("Deltas ohne zugehoerigen Commit:", ", ".join(sorted(unused)))
+    for h in hinweise:
+        print("Hinweis:", h)
     if naked:
-        print("\nBefund: Aenderungen an Artefakten ohne Delta-Bezug. In einem Repo ohne "
-              "durchgesetzte Branch Protection ist das nicht verhinderbar, aber messbar.")
-    return 2 if naked else 0
+        print("\nBefund: Commits auf Artefakten ohne Delta-Bezug im Betreff.")
+    return EXIT_ABGELEHNT if naked else EXIT_OK
 
 
 def cmd_hash(a) -> int:
     """Liefert das Anker-Paket fuer den Delta-Autor: Abschnittstext, Hash, base_sha."""
     repo = Path(a.repo)
-    path, why = resolve_doc(repo, a.document)
+    path, rel, why = resolve_doc(repo, a.document)
     if path is None:
         print(why, file=sys.stderr)
-        return 2
-    rel = str(path.relative_to(repo))
-    sec = find_section(path.read_text(encoding="utf-8"), a.heading)
+        return EXIT_ABGELEHNT
+    content = _text(path.read_bytes())
+    if content is None:
+        print(f"{rel} ist kein UTF-8", file=sys.stderr)
+        return EXIT_ABGELEHNT
+    if "\r" in content:
+        print(f"{rel} enthält Windows-Zeilenenden (CR) — nicht unterstützt", file=sys.stderr)
+        return EXIT_ABGELEHNT
+    sec = find_section(content, a.heading)
     if sec["status"] != "ok":
         print(f"Abschnitt nicht adressierbar: {sec['reason']}", file=sys.stderr)
-        return 2
+        return EXIT_ABGELEHNT
     body = sec["section_text"].split("\n")
-    head = _git(repo, "rev-parse", "HEAD")
+    _, head, _ = _git_text(repo, "rev-parse", "HEAD")
     print(f"document      : {Path(rel).name}")
     print(f"pfad_im_repo  : {rel}")
     print(f"section_heading: {a.heading}")
-    print(f"base_sha      : {head.stdout.strip() or '— (kein Git-Repo)'}")
+    print(f"base_sha      : {head.strip() or '— (kein Git-Repo)'}")
     print(f"context_hash  : {compute_section_hash(sec['section_text'])}")
     print(f"expected_lines.before: {len(body)}")
     print("--- ABSCHNITT, WORTGETREU (Ueberschrift + Body) ---")
     print(sec["section_text"])
     print("--- ENDE ABSCHNITT ---")
-    return 0
+    return EXIT_OK
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser(prog="deltakit")
+# ------------------------------------------------------------------ selftest
+
+def _dateikopf_subkommandos() -> list[str]:
+    teil = (__doc__ or "").split("Subkommandos:", 1)[-1].split("\n\n", 1)[0]
+    return [z.split()[0] for z in teil.strip("\n").split("\n") if z.strip()]
+
+
+def _argparse_subkommandos() -> list[str]:
+    for act in _parser()._actions:
+        if isinstance(act, argparse._SubParsersAction):
+            return list(act.choices)
+    return []
+
+
+def _klon(repo: Path, stand: str, ziel: Path) -> None:
+    """Wegwerf-Kopie des Repositorys am festen Stand. Teilt die Objekte, aendert den Klon nicht."""
+    r = subprocess.run(["git", "clone", "--quiet", "--shared", "--no-checkout", str(repo), str(ziel)],
+                       capture_output=True)
+    if r.returncode != 0:
+        raise Bedienfehler(f"Kopie von {repo} fehlgeschlagen: {r.stderr.decode('utf-8', 'replace').strip()[:160]}")
+    r = subprocess.run(["git", "-C", str(ziel), "-c", "advice.detachedHead=false", "checkout", "--quiet",
+                        "--detach", stand], capture_output=True)
+    if r.returncode != 0:
+        raise Bedienfehler(f"Stand {stand} nicht auszucheckbar: {r.stderr.decode('utf-8', 'replace').strip()[:160]}")
+
+
+def _passt(r: subprocess.CompletedProcess, erw: dict) -> tuple[bool, str]:
+    text = r.stdout.decode("utf-8", "replace") + r.stderr.decode("utf-8", "replace")
+    fehlt = [s for s in erw.get("enthaelt", []) if s not in text]
+    zuviel = [s for s in erw.get("enthaelt_nicht", []) if s in text]
+    ok = r.returncode == erw["exit"] and not fehlt and not zuviel
+    teile = [f"exit {r.returncode} (erwartet {erw['exit']})"]
+    if fehlt:
+        teile.append("fehlt: " + " | ".join(repr(s) for s in fehlt))
+    if zuviel:
+        teile.append("darf nicht vorkommen: " + " | ".join(repr(s) for s in zuviel))
+    return ok, " · ".join(teile)
+
+
+def _laufe_kontrollfaelle(kf: dict, repo: Path, kf_pfad: Path) -> bool:
+    tool = Path(__file__).resolve()
+    env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", GIT_PAGER="cat")
+    print()
+    print(f"Kontrollfälle: {kf_pfad} · sha256 {hashlib.sha256(kf_pfad.read_bytes()).hexdigest()}")
+    print(f"Werkzeug: {tool} · sha256 {hashlib.sha256(tool.read_bytes()).hexdigest()} · Fassung {FASSUNG}")
+    print(f"Klon: {repo}")
+    for stand in kf["staende"]:
+        r = subprocess.run(["git", "-C", str(repo), "cat-file", "-e", f"{stand}^{{commit}}"], capture_output=True)
+        if r.returncode != 0:
+            raise Bedienfehler(f"Stand {stand} fehlt im Klon {repo} — erst 'git fetch --all' ausführen")
+    tmp = Path(tempfile.mkdtemp(prefix="deltakit-selftest-"))
+    try:
+        ablage = tmp / "faelle"
+        ablage.mkdir()
+        deltas, ziele = {}, {}
+        for name, d in kf["deltas"].items():
+            p = ablage / f"{name}.json"
+            p.write_bytes((json.dumps(d, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
+            deltas[name] = p
+        for name, z in kf["zieltexte"].items():
+            t = z["text"] if "text" in z else kf["zieltexte"][z["basis"]]["text"]
+            if "erste_zeile" in z:
+                t = z["erste_zeile"] + "\n" + t.split("\n", 1)[1]
+            if z.get("crlf"):
+                t = t.replace("\n", "\r\n")
+            p = ablage / f"ziel_{name}.md"
+            p.write_bytes((t + ("\r\n" if z.get("crlf") else "\n")).encode("utf-8"))
+            ziele[name] = p
+
+        def arg(x: str, klon: Path) -> str:
+            if x.startswith("@delta:"):
+                return str(deltas[x[7:]])
+            if x.startswith("@ziel:"):
+                return str(ziele[x[6:]])
+            if x == "@fehlt":
+                return str(tmp / "fehlt" / "fehlt.json")
+            if x.startswith("@abs:"):
+                return str(klon / x[5:])
+            return x
+
+        def lauf(befehl: list[str], klon: Path) -> subprocess.CompletedProcess:
+            return subprocess.run([sys.executable, str(tool)] + [arg(x, klon) for x in befehl],
+                                  cwd=str(klon), env=env, capture_output=True)
+
+        gesamt, gut = 0, 0
+        for n, fall in enumerate(kf["faelle"]):
+            fid, typ = fall["id"], fall.get("typ", "aufruf")
+            if typ == "verweis":
+                print(f"  [—  ] {fid}  {fall['beschreibung']}")
+                continue
+            gesamt += 1
+            if typ == "intern":
+                a_kopf, a_arg = _dateikopf_subkommandos(), _argparse_subkommandos()
+                ok = sorted(a_kopf) == sorted(a_arg) and len(a_arg) == fall["anzahl"]
+                info = f"Dateikopf {len(a_kopf)} · argparse {len(a_arg)}"
+            else:
+                klon = tmp / f"k{n:02d}"
+                if typ == "synthetisch":
+                    _synthetisch_crlf(fall, klon, repo, deltas)
+                else:
+                    _klon(repo, fall["stand"], klon)
+                for v in fall.get("vorbereitung", []):
+                    ziel_p = klon / v["pfad"]
+                    if v["aktion"] == "crlf":
+                        ziel_p.write_bytes(ziel_p.read_bytes().replace(b"\n", b"\r\n"))
+                    elif v["aktion"] == "schreibe":
+                        ziel_p.write_bytes(v["inhalt"].encode("utf-8"))
+                schritte = fall["schritte"] if typ == "folge" else [fall]
+                ergebnisse, ok, infos = [], True, []
+                for s in schritte:
+                    r = lauf(s["befehl"], klon)
+                    ergebnisse.append(r)
+                    o, i = _passt(r, s["erwartung"])
+                    ok &= o
+                    infos.append(i)
+                for i, j in fall.get("gleich", []):
+                    same = ergebnisse[i].stdout == ergebnisse[j].stdout
+                    ok &= same
+                    infos.append(f"Ausgabe Schritt {i + 1} {'=' if same else '≠'} Schritt {j + 1}")
+                info = " ; ".join(infos)
+            gut += ok
+            print(f"  [{'ok ' if ok else 'ABW'}] {fid}  {fall['beschreibung']} — {info}")
+        print(f"Kontrollfälle: {gesamt} · wie erwartet: {gut}")
+        return gut == gesamt
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def _synthetisch_crlf(fall: dict, ziel: Path, repo: Path, deltas: dict) -> None:
+    """W-10: Wegwerf-Repository, in dem die Zieldatei mit CRLF lag und dann so umgeschrieben wurde,
+    wie es die Fassung vor S014 tat (alles LF, Delta angewendet). verify muss das melden."""
+    g = ["git", "-C", str(ziel), "-c", "user.name=selftest", "-c", "user.email=selftest@invalid",
+         "-c", "commit.gpgsign=false"]
+    ziel.mkdir(parents=True)
+    subprocess.run(["git", "init", "--quiet", str(ziel)], check=True, capture_output=True)
+    quelle = subprocess.run(["git", "-C", str(repo), "show", f"{fall['stand']}:{fall['datei']}"],
+                            capture_output=True, check=True).stdout
+    lf = quelle.decode("utf-8")
+    datei = ziel / fall["datei"]
+    datei.parent.mkdir(parents=True, exist_ok=True)
+    datei.write_bytes(lf.replace("\n", "\r\n").encode("utf-8"))
+    subprocess.run(g + ["add", "-A"], check=True, capture_output=True)
+    subprocess.run(g + ["commit", "--quiet", "-m", "Basisstand mit CRLF"], check=True, capture_output=True)
+    base = subprocess.run(["git", "-C", str(ziel), "rev-parse", "HEAD"], capture_output=True,
+                          check=True).stdout.decode().strip()
+    d = json.loads(deltas[fall["delta"]].read_bytes().decode("utf-8"))
+    sec = find_section(lf, d["target"]["section_heading"])
+    alt = render(d, {"content": lf, "section": sec})
+    datei.write_bytes(alt.encode("utf-8"))
+    subprocess.run(g + ["add", "-A"], check=True, capture_output=True)
+    subprocess.run(g + ["commit", "--quiet", "-m", "Anwendung, Datei auf LF umgeschrieben"], check=True,
+                   capture_output=True)
+    d["target"]["base_sha"] = base
+    (ziel / "delta.json").write_bytes((json.dumps(d, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
+
+
+def cmd_selftest(a) -> int:
+    gut = _leseseite(a.corpus)
+    if a.nur_leseseite:
+        return EXIT_OK if gut else EXIT_ABGELEHNT
+    pfad = Path(a.kontrollfaelle) if a.kontrollfaelle else Path(__file__).resolve().parent / "kontrollfaelle.json"
+    if not pfad.is_file():
+        raise Bedienfehler(f"Kontrollfälle nicht gefunden: {pfad}")
+    kf = json.loads(pfad.read_bytes().decode("utf-8"))
+    gut = _laufe_kontrollfaelle(kf, Path(a.repo).resolve(), pfad) and gut
+    return EXIT_OK if gut else EXIT_ABGELEHNT
+
+
+def _parser() -> _Parser:
+    ap = _Parser(prog="deltakit")
     sub = ap.add_subparsers(dest="cmd", required=True)
     for name, fn in (("check", cmd_check), ("render", cmd_render), ("pr-body", cmd_pr_body)):
         p = sub.add_parser(name)
         p.add_argument("delta")
         p.add_argument("--repo", default=".")
+        g = p.add_mutually_exclusive_group()
+        g.add_argument("--zieltext", default=None)
+        g.add_argument("--ohne-inhalt", action="store_true")
         if name == "render":
             p.add_argument("--write", action="store_true")
         p.set_defaults(fn=fn)
-    p = sub.add_parser("selftest")
-    p.add_argument("--corpus", nargs="+", default=["."])
-    p.set_defaults(fn=cmd_selftest)
-
     p = sub.add_parser("hash")
     p.add_argument("document")
     p.add_argument("--heading", required=True)
@@ -583,8 +971,25 @@ def main() -> int:
     p.add_argument("--artefacts", default="artefakte")
     p.set_defaults(fn=cmd_audit)
 
-    a = ap.parse_args()
-    return a.fn(a)
+    p = sub.add_parser("selftest")
+    p.add_argument("--corpus", nargs="+", default=["."])
+    p.add_argument("--kontrollfaelle", default=None)
+    p.add_argument("--repo", default=".")
+    p.add_argument("--nur-leseseite", action="store_true")
+    p.set_defaults(fn=cmd_selftest)
+    return ap
+
+
+def main(argv: list[str] | None = None) -> int:
+    a = _parser().parse_args(argv)
+    try:
+        return a.fn(a)
+    except Bedienfehler as e:
+        print(f"BEDIENFEHLER: {e}", file=sys.stderr)
+        return EXIT_BEDIENFEHLER
+    except Exception as e:  # noqa: BLE001 — nie exit 1; ein interner Fehler laesst nichts durch
+        print(f"INTERNER FEHLER ({type(e).__name__}): {e}", file=sys.stderr)
+        return EXIT_BEDIENFEHLER
 
 
 if __name__ == "__main__":
