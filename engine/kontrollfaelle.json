@@ -1,0 +1,1243 @@
+{
+ "fassung": "S014",
+ "beschreibung": "Kontrollfälle für engine/deltakit.py, Fassung S014. Freigegeben vom Owner am 2026-10-06 (P1_VORLAGE_Kontrollfaelle_S014.md); I-17 mit A3 ergänzt. Ausgeführt von 'deltakit selftest'.",
+ "quelle": "bau_s014_kontrollfaelle.py, PBP-S014; Erwartungen mit der Fassung 931cd7eb… und mess_s013_p3_analyse.py gerechnet",
+ "staende": [
+  "8f3bc362a368e6f96becc65d21f52af97f262572",
+  "337876fbbda00e835e94911f0e1f302e7d8338d2",
+  "db543e332474bb4ccd24ad0ee9e231218e42e3e1"
+ ],
+ "zieltexte": {
+  "referenz": {
+   "text": "### 2.1 Schicht-Architektur\n\n```\nSCHICHT 0 (permanent, kein RAG-Slot):\n  Core + Claude Instructions — 2 Dateien\n\nSCHICHT 1 — PFLICHT:\n  ULTRA_PROTOCOL_SYS_PBP_1_2.md\n  ULTRA_PROTOCOL_SYS_CCR_1_4.md\n  ULTRA_PROTOCOL_SYS_INIT_RUNTIME_1_0.md\n  ULTRA_PROTOCOL_SYS_COMMIT_RUNTIME_1_0.md\n  ULTRA_DATA_SYS_DELTA-FORCE_0_4.md         ← diese Datei selbst, aktiv gepflegt\n\nSCHICHT 1 — NAVIGATORISCH:\n  ULTRA_REF_SYS_REGISTRY_RUNTIME_1_0.md\n  Führungs-Referenz: UEBERGABE_PBP-S006_nach_S007.md\n\nSCHICHT 2 — bei Bedarf:\n  ULTRA_PROTOCOL_SYS_EVOLUTION_1_3.md\n  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 und Z.134 korrekturbedürftig, s. Sektion 1\n  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← Schreibseite aufgegeben, s. PBP-ART-014\n  ULTRA_PROTOCOL_SYS_WARTUNG_1_3.md          (v1.3.10 — Δ-DF-01 angewendet 2026-08-31)\n  ULTRA_REF_SYS_REGISTRY_3_2.md              (v3.2.36 — kein ausstehender Fix)\n  ULTRA_REF_SYS_STRUKTUR_1_5.md              (nicht mit STRUKTURSTANDARD verwechseln)\n  ULTRA_REF_SYS_STRUKTURSTANDARD_1_1.md\n  ULTRA_REF_SYS_NAMING_CONVENTION_1_0.md\n  ULTRA_PROTOCOL_SYS_CIP_1_0.md              (Fossil, Härtung zurückgestellt)\n  ULTRA_ARCH_SYS_FOUNDATION_1_0.md\n  ULTRA_PROTOCOL_SYS_ITA_1_2.md\n  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §6 überholt, s. PBP-ART-014]\n\nSCHICHT 3 — Archiv (niemals Standard-Session):\n  layer3-archive/hist/, layer3-archive/delta-pakete/, layer3-archive/deprecated/\n  β-Vorgeschichte (Kern-Härtung/IMAGO-Linie) — Referenz, kein Layer-1/2-Slot.\n  PBP-S004-Arbeitsprodukte: TESTKIT.md, ULTRA_PROTOCOL_SYS_WARTUNG_TEST.md,\n  ULTRA_RUNBOOK_SYS_DELTA-FORCE_POISONED-RATIONALE_1_0.md,\n  ULTRA_REVIEW_SYS_DELTA-FORCE-TESTVORBEREITUNG_1_0.md\n  ULTRA_REVIEW_SYS_DELTA-FORCE-STANDORT_1_0 (P5 aus S005),\n  Lauf-1-Ausgabe der Urteilsachse (Claude Code Web, 2026-09-12).\n  [NEU, PBP-S006] rejected/ULTRA-Delta-20260912-001.json ·\n  HANDBUCH_PBP-S006_Testhandgriffe.md · AUSWERTUNGSSCHLUESSEL_Lauf2_VERSIEGELT.md ·\n  Rohausgaben der drei Läufe A/B/C (Haiku 4.5 ×2, Sonnet 5 niedrig).\n  metaposition.md · metaposition_nachtrag.md ·\n  UEBERGABE_PBP-S005_nach_S006.md — archiviert (Owner-Entscheid 2026-09-15).\n  Rohausgaben Lauf 1a: ChatGPT.json · Grok.json · Qwen.json\n```\n\n**Layer-1-Count: 7 / 7 Slots — 7 Dateien.**\nDer Befund zur Bündel-Konvention ist geschlossen.\n",
+   "sha256": "sha256:9da6be7ddd7ee3d6b75aa2aa761a09622fbbe423103621f80714a5db8f96545b",
+   "herkunft": "Abschnitt nach der Referenzumsetzung, Handbuch Lauf 3 §5"
+  },
+  "referenz_crlf": {
+   "basis": "referenz",
+   "crlf": true
+  },
+  "andere_ueberschrift": {
+   "basis": "referenz",
+   "erste_zeile": "### 2.2 Andere Überschrift"
+  }
+ },
+ "deltas": {
+  "referenz": {
+   "delta_id": "KONTROLLFALL-S014-REFERENZ",
+   "schema_version": "udp-1.0",
+   "target": {
+    "document": "TESTGEGENSTAND_TRANSPORTACHSE_01.md",
+    "section_heading": "### 2.1 Schicht-Architektur",
+    "context_hash": "sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1",
+    "base_sha": "4efdce9eec95ea82bd57e485e15e67aa608c89a0"
+   },
+   "operation": "replace_lines",
+   "payload": [
+    {
+     "old": "*Delta `ULTRA-Δ-20260912-001` NICHT angewendet — auf `rejected` gesetzt (PBP-ART-009).\nDie zwei Statuszeilen, die es korrigieren sollte, stehen seit v0.3 korrekt.*\n\n",
+     "new": ""
+    },
+    {
+     "old": "  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 korrekturbedürftig, s. Sektion 1\n  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← v1.0.1, vier Befunde PBP-ART-010",
+     "new": "  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 und Z.134 korrekturbedürftig, s. Sektion 1\n  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← Schreibseite aufgegeben, s. PBP-ART-014"
+    },
+    {
+     "old": "  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §1 hat seit S006 zwei\n                                               gemessene Befunde, §3–§6 weiter unbelegt]",
+     "new": "  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §6 überholt, s. PBP-ART-014]"
+    },
+    {
+     "old": "  UEBERGABE_PBP-S005_nach_S006.md — archiviert (Owner-Entscheid 2026-09-15).",
+     "new": "  UEBERGABE_PBP-S005_nach_S006.md — archiviert (Owner-Entscheid 2026-09-15).\n  Rohausgaben Lauf 1a: ChatGPT.json · Grok.json · Qwen.json"
+    }
+   ],
+   "meta": {
+    "rationale": "Referenzumsetzung nach Handbuch Lauf 3 §5, gebaut wie in S013 (mess_s013_p3_analyse.py).",
+    "author": "Steuerungs-Chat PBP-S014 (konstruiert)",
+    "status": "pending",
+    "expected_lines": {
+     "before": 53,
+     "after": 50
+    }
+   }
+  },
+  "formvariante": {
+   "delta_id": "KONTROLLFALL-S014-FORMVARIANTE",
+   "schema_version": "udp-1.0",
+   "target": {
+    "document": "TESTGEGENSTAND_TRANSPORTACHSE_01.md",
+    "section_heading": "### 2.1 Schicht-Architektur",
+    "context_hash": "sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1",
+    "base_sha": "4efdce9eec95ea82bd57e485e15e67aa608c89a0"
+   },
+   "operation": "replace_lines",
+   "payload": [
+    {
+     "old": "*Delta `ULTRA-Δ-20260912-001` NICHT angewendet — auf `rejected` gesetzt (PBP-ART-009).\nDie zwei Statuszeilen, die es korrigieren sollte, stehen seit v0.3 korrekt.*\n\n",
+     "new": ""
+    },
+    {
+     "old": "  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 korrekturbedürftig, s. Sektion 1\n  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← v1.0.1, vier Befunde PBP-ART-010",
+     "new": "  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 und Z.134 korrekturbedürftig, s. Sektion 1\n  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← Schreibseite aufgegeben, s. PBP-ART-014"
+    },
+    {
+     "old": "  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §1 hat seit S006 zwei\n                                               gemessene Befunde, §3–§6 weiter unbelegt]",
+     "new": "  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §6 überholt, s. PBP-ART-014]"
+    },
+    {
+     "old": "  UEBERGABE_PBP-S005_nach_S006.md — archiviert (Owner-Entscheid 2026-09-15).",
+     "new": "  UEBERGABE_PBP-S005_nach_S006.md — archiviert (Owner-Entscheid 2026-09-15).\n    Rohausgaben Lauf 1a: ChatGPT.json · Grok.json · Qwen.json"
+    }
+   ],
+   "meta": {
+    "rationale": "Referenz, neuer Eintrag mit vier statt zwei Leerzeichen eingerückt.",
+    "author": "Steuerungs-Chat PBP-S014 (konstruiert)",
+    "status": "pending",
+    "expected_lines": {
+     "before": 53,
+     "after": 50
+    }
+   }
+  },
+  "c2stern": {
+   "delta_id": "ULTRA-Δ-20260919-004",
+   "schema_version": "udp-1.0",
+   "target": {
+    "document": "TESTGEGENSTAND_TRANSPORTACHSE_01.md",
+    "section_heading": "### 2.1 Schicht-Architektur",
+    "context_hash": "sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1",
+    "base_sha": "76b33f9d82ce8c0b56e510abd1a95ba1d21b2817"
+   },
+   "operation": "replace_lines",
+   "payload": [
+    {
+     "old": "\n*Delta `ULTRA-Δ-20260912-001` NICHT angewendet — auf `rejected` gesetzt (PBP-ART-009).\nDie zwei Statuszeilen, die es korrigieren sollte, stehen seit v0.3 korrekt.*\n\n`",
+     "new": "\n`"
+    },
+    {
+     "old": "  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 korrekturbedürftig, s. Sektion 1",
+     "new": "  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 und Z.134 korrekturbedürftig, s. Sektion 1"
+    },
+    {
+     "old": "  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← v1.0.1, vier Befunde PBP-ART-010",
+     "new": "  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← Schreibseite aufgegeben, s. PBP-ART-014"
+    },
+    {
+     "old": "  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §1 hat seit S006 zwei\n                                               gemessene Befunde, §3–§6 weiter unbelegt]",
+     "new": "  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §6 überholt, s. PBP-ART-014]"
+    },
+    {
+     "old": "  UEBERGABE_PBP-S005_nach_S006.md — archiviert (Owner-Entscheid 2026-09-15).",
+     "new": "  UEBERGABE_PBP-S005_nach_S006.md — archiviert (Owner-Entscheid 2026-09-15).\n  Rohausgaben Lauf 1a: ChatGPT.json · Grok.json · Qwen.json"
+    }
+   ],
+   "meta": {
+    "rationale": "Verworfenes Delta wird entfernt, die drei Schicht-2-Vermerke werden aktualisiert und die Rohausgaben von Lauf 1a als letzter Schicht-3-Eintrag ergänzt.",
+    "author": "GPT-5.6 Luna",
+    "status": "pending",
+    "expected_lines": {
+     "before": 53,
+     "after": 50
+    }
+   }
+  },
+  "qwen_r1": {
+   "delta_id": "ULTRA-Δ-20260930-005",
+   "schema_version": "udp-1.0",
+   "target": {
+    "document": "TESTGEGENSTAND_TRANSPORTACHSE_01.md",
+    "section_heading": "### 2.1 Schicht-Architektur",
+    "context_hash": "sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1",
+    "base_sha": "4efdce9eec95ea82bd57e485e15e67aa608c89a0"
+   },
+   "operation": "replace_lines",
+   "payload": [
+    {
+     "old": "*Delta `ULTRA-Δ-20260912-001` NICHT angewendet — auf `rejected` gesetzt (PBP-ART-009).\nDie zwei Statuszeilen, die es korrigieren sollte, stehen seit v0.3 korrekt.*\n\n",
+     "new": ""
+    },
+    {
+     "old": "  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 korrekturbedürftig, s. Sektion 1\n  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← v1.0.1, vier Befunde PBP-ART-010",
+     "new": "  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 und Z.134 korrekturbedürftig, s. Sektion 1\n  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← Schreibseite aufgegeben, s. PBP-ART-014"
+    },
+    {
+     "old": "  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §1 hat seit S006 zwei\n                                               gemessene Befunde, §3–§6 weiter unbelegt]",
+     "new": "  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §6 überholt, s. PBP-ART-014]"
+    },
+    {
+     "old": "  UEBERGABE_PBP-S005_nach_S006.md — archiviert (Owner-Entscheid 2026-09-15).",
+     "new": "  UEBERGABE_PBP-S005_nach_S006.md — archiviert (Owner-Entscheid 2026-09-15).\n  Rohausgaben Lauf 1a: ChatGPT.json · Grok.json · Qwen.json"
+    }
+   ],
+   "meta": {
+    "rationale": "Verworfenes Delta entfernt, Schicht-2-Vermerke gemäß PBP-ART-014 aktualisiert und Lauf-1a-Rohausgaben als letzten Archiv-Eintrag ergänzt.",
+    "author": "Qwen3.7",
+    "status": "pending",
+    "expected_lines": {
+     "before": 53,
+     "after": 50
+    }
+   }
+  },
+  "grok_r1": {
+   "delta_id": "ULTRA-Δ-20260930-005",
+   "schema_version": "udp-1.0",
+   "target": {
+    "document": "TESTGEGENSTAND_TRANSPORTACHSE_01.md",
+    "section_heading": "### 2.1 Schicht-Architektur",
+    "context_hash": "sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1",
+    "base_sha": "4efdce9eec95ea82bd57e485e15e67aa608c89a0"
+   },
+   "operation": "replace_lines",
+   "payload": [
+    {
+     "old": "*Delta `ULTRA-Δ-20260912-001` NICHT angewendet — auf `rejected` gesetzt (PBP-ART-009).\nDie zwei Statuszeilen, die es korrigieren sollte, stehen seit v0.3 korrekt.*\n",
+     "new": "\n"
+    },
+    {
+     "old": "  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 korrekturbedürftig, s. Sektion 1",
+     "new": "  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 und Z.134 korrekturbedürftig, s. Sektion 1"
+    },
+    {
+     "old": "  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← v1.0.1, vier Befunde PBP-ART-010",
+     "new": "  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← Schreibseite aufgegeben, s. PBP-ART-014"
+    },
+    {
+     "old": "  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §1 hat seit S006 zwei\n                                               gemessene Befunde, §3–§6 weiter unbelegt]",
+     "new": "  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §6 überholt, s. PBP-ART-014]"
+    },
+    {
+     "old": "  UEBERGABE_PBP-S005_nach_S006.md — archiviert (Owner-Entscheid 2026-09-15).",
+     "new": "  UEBERGABE_PBP-S005_nach_S006.md — archiviert (Owner-Entscheid 2026-09-15).\n  Rohausgaben Lauf 1a: ChatGPT.json · Grok.json · Qwen.json"
+    }
+   ],
+   "meta": {
+    "rationale": "Verworfene Delta-Notiz entfernen, Schicht-2-Vermerke gemäß PBP-ART-014 aktualisieren und Rohausgaben Lauf 1a als letzten Schicht-3-Eintrag ergänzen.",
+    "author": "Grok 4.5",
+    "status": "pending",
+    "expected_lines": {
+     "before": 53,
+     "after": 50
+    }
+   }
+  },
+  "chatgpt_r1": {
+   "delta_id": "ULTRA-Δ-20260930-005",
+   "schema_version": "udp-1.0",
+   "target": {
+    "document": "TESTGEGENSTAND_TRANSPORTACHSE_01.md",
+    "section_heading": "### 2.1 Schicht-Architektur",
+    "context_hash": "sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1",
+    "base_sha": "4efdce9eec95ea82bd57e485e15e67aa608c89a0"
+   },
+   "operation": "replace_lines",
+   "payload": [
+    {
+     "old": "*Delta `ULTRA-Δ-20260912-001` NICHT angewendet — auf `rejected` gesetzt (PBP-ART-009).\nDie zwei Statuszeilen, die es korrigieren sollte, stehen seit v0.3 korrekt.*\n",
+     "new": ""
+    },
+    {
+     "old": "  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 korrekturbedürftig, s. Sektion 1",
+     "new": "  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 und Z.134 korrekturbedürftig, s. Sektion 1"
+    },
+    {
+     "old": "  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← v1.0.1, vier Befunde PBP-ART-010",
+     "new": "  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← Schreibseite aufgegeben, s. PBP-ART-014"
+    },
+    {
+     "old": "  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §1 hat seit S006 zwei\n                                               gemessene Befunde, §3–§6 weiter unbelegt]",
+     "new": "  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §6 überholt, s. PBP-ART-014]"
+    },
+    {
+     "old": "  UEBERGABE_PBP-S005_nach_S006.md — archiviert (Owner-Entscheid 2026-09-15).",
+     "new": "  UEBERGABE_PBP-S005_nach_S006.md — archiviert (Owner-Entscheid 2026-09-15).\n  Rohausgaben Lauf 1a: ChatGPT.json · Grok.json · Qwen.json"
+    }
+   ],
+   "meta": {
+    "rationale": "Die verworfene Delta-Notiz wird entfernt, die drei Schicht-2-Vermerke werden aktualisiert und die Rohausgaben von Lauf 1a als letzter Schicht-3-Eintrag ergänzt.",
+    "author": "GPT-5.6 Luna",
+    "status": "pending",
+    "expected_lines": {
+     "before": 53,
+     "after": 50
+    }
+   }
+  },
+  "gegenfall": {
+   "delta_id": "GEGENFALL-S013-P3",
+   "schema_version": "udp-1.0",
+   "target": {
+    "document": "TESTGEGENSTAND_TRANSPORTACHSE_01.md",
+    "section_heading": "### 2.1 Schicht-Architektur",
+    "context_hash": "sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1",
+    "base_sha": "4efdce9eec95ea82bd57e485e15e67aa608c89a0"
+   },
+   "operation": "replace_lines",
+   "payload": [
+    {
+     "old": "*Delta `ULTRA-Δ-20260912-001` NICHT angewendet — auf `rejected` gesetzt (PBP-ART-009).\nDie zwei Statuszeilen, die es korrigieren sollte, stehen seit v0.3 korrekt.*\n",
+     "new": ""
+    },
+    {
+     "old": "  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 korrekturbedürftig, s. Sektion 1\n  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← v1.0.1, vier Befunde PBP-ART-010",
+     "new": "  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 und Z.134 korrekturbedürftig, s. Sektion 1\n  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← Schreibseite aufgegeben, s. PBP-ART-014"
+    },
+    {
+     "old": "  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §1 hat seit S006 zwei\n                                               gemessene Befunde, §3–§6 weiter unbelegt]",
+     "new": "  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §6 überholt, s. PBP-ART-014]"
+    },
+    {
+     "old": "  UEBERGABE_PBP-S005_nach_S006.md — archiviert (Owner-Entscheid 2026-09-15).",
+     "new": "  Rohausgaben Lauf 1a: ChatGPT.json · Grok.json · Qwen.json"
+    }
+   ],
+   "meta": {
+    "rationale": "Gegenfall; konstruiert, nicht von einem Modell; wird nicht angewendet.",
+    "author": "Steuerungs-Chat",
+    "status": "pending",
+    "expected_lines": {
+     "before": 53,
+     "after": 50
+    }
+   }
+  },
+  "w02": {
+   "delta_id": "ULTRA-Δ-20260919-004",
+   "schema_version": "udp-1.0",
+   "target": {
+    "document": "TESTGEGENSTAND_TRANSPORTACHSE_01.md",
+    "section_heading": "### 2.1 Schicht-Architektur",
+    "context_hash": "sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f0",
+    "base_sha": "76b33f9d82ce8c0b56e510abd1a95ba1d21b2817"
+   },
+   "operation": "replace_lines",
+   "payload": [
+    {
+     "old": "*Delta `ULTRA-Δ-20260912-001` NICHT angewendet — auf `rejected` gesetzt (PBP-ART-009).\nDie zwei Statuszeilen, die es korrigieren sollte, stehen seit v0.3 korrekt.*\n",
+     "new": "\n"
+    },
+    {
+     "old": "  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 korrekturbedürftig, s. Sektion 1\n  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← v1.0.1, vier Befunde PBP-ART-010\n",
+     "new": "  ULTRA_PROTOCOL_SYS_DELTA_1_1.md            ← §2.2 und Z.134 korrekturbedürftig, s. Sektion 1\n  ULTRA_REF_SYS_DELTA_ENGINE_1_0.md          ← Schreibseite aufgegeben, s. PBP-ART-014\n"
+    },
+    {
+     "old": "  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §1 hat seit S006 zwei\n                                               gemessene Befunde, §3–§6 weiter unbelegt]\n",
+     "new": "  ULTRA_ARCH_SYS_DELTA-FORCE-SUBSTRAT_0_1.md [Entwurf — §6 überholt, s. PBP-ART-014]\n"
+    },
+    {
+     "old": "  UEBERGABE_PBP-S005_nach_S006.md — archiviert (Owner-Entscheid 2026-09-15).\n",
+     "new": "  UEBERGABE_PBP-S005_nach_S006.md — archiviert (Owner-Entscheid 2026-09-15).\n  Rohausgaben Lauf 1a: ChatGPT.json · Grok.json · Qwen.json\n"
+    }
+   ],
+   "meta": {
+    "rationale": "Entfernt die verworfene Delta-Notiz, aktualisiert die drei SCHICHT-2-Vermerke gemäß Owner-Entscheid PBP-ART-014 und ergänzt die Rohausgaben Lauf 1a als letzten SCHICHT-3-Eintrag.",
+    "author": "Grok 4.5",
+    "status": "pending",
+    "expected_lines": {
+     "before": 53,
+     "after": 52
+    }
+   }
+  },
+  "w07": {
+   "delta_id": "KONTROLLFALL-S014-W07",
+   "schema_version": "udp-1.0",
+   "target": {
+    "document": "TESTGEGENSTAND_TRANSPORTACHSE_01.md",
+    "section_heading": "### 2.1 Schicht-Architektur",
+    "context_hash": "sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1",
+    "base_sha": "4efdce9eec95ea82bd57e485e15e67aa608c89a0"
+   },
+   "operation": "replace_section",
+   "payload": [
+    "a",
+    "b"
+   ],
+   "meta": {
+    "rationale": "replace_section mit einer Liste als payload (1b-4).",
+    "author": "Steuerungs-Chat PBP-S014 (konstruiert)",
+    "status": "pending",
+    "expected_lines": {
+     "before": 53,
+     "after": 53
+    }
+   }
+  },
+  "r07": {
+   "delta_id": "KONTROLLFALL-S014-R07",
+   "schema_version": "udp-1.0",
+   "target": {
+    "document": "TESTGEGENSTAND_TRANSPORTACHSE_01.md",
+    "section_heading": "### 2.1 Schicht-Architektur",
+    "context_hash": "sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1",
+    "base_sha": "4efdce9eec95ea82bd57e485e15e67aa608c89a0"
+   },
+   "operation": "replace_lines",
+   "payload": [
+    {
+     "old": "ULTRA_PROTOCOL_SYS_",
+     "new": "ULTRA_PROTOKOLL_"
+    }
+   ],
+   "meta": {
+    "rationale": "old kommt mehrfach vor.",
+    "author": "Steuerungs-Chat PBP-S014 (konstruiert)",
+    "status": "pending",
+    "expected_lines": {
+     "before": 53,
+     "after": 53
+    }
+   }
+  },
+  "r08": {
+   "delta_id": "KONTROLLFALL-S014-R08",
+   "schema_version": "udp-1.0",
+   "target": {
+    "document": "TESTGEGENSTAND_TRANSPORTACHSE_01.md",
+    "section_heading": "### 2.1 Schicht-Architektur",
+    "context_hash": "sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1",
+    "base_sha": "4efdce9eec95ea82bd57e485e15e67aa608c89a0"
+   },
+   "operation": "replace_lines",
+   "payload": [
+    {
+     "old": "SCHICHT 0 (permanent, kein RAG-Slot):\n  Core",
+     "new": "SCHICHT 0:\n  Core"
+    },
+    {
+     "old": "Core + Claude Instructions",
+     "new": "Kern + Anweisungen"
+    }
+   ],
+   "meta": {
+    "rationale": "zwei Einträge überlappen.",
+    "author": "Steuerungs-Chat PBP-S014 (konstruiert)",
+    "status": "pending",
+    "expected_lines": {
+     "before": 53,
+     "after": 53
+    }
+   }
+  }
+ },
+ "faelle": [
+  {
+   "id": "I-01",
+   "beschreibung": "Referenz nach Handbuch §5",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "@delta:referenz",
+    "--zieltext",
+    "@ziel:referenz",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 0,
+    "enthaelt": [
+     "ok — anwendbar",
+     "Inhalt gleich dem Zieltext sha256:9da6be7ddd7ee3d6b75aa2aa761a09622fbbe423103621f80714a5db8f96545b"
+    ]
+   }
+  },
+  {
+   "id": "I-02",
+   "beschreibung": "ChatGPT Lauf 2, das fehlende „*\" ergänzt",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "@delta:c2stern",
+    "--zieltext",
+    "@ziel:referenz",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 0,
+    "enthaelt": [
+     "ok — anwendbar",
+     "Inhalt gleich dem Zieltext sha256:9da6be7ddd7ee3d6b75aa2aa761a09622fbbe423103621f80714a5db8f96545b"
+    ]
+   }
+  },
+  {
+   "id": "I-03",
+   "beschreibung": "Qwen Runde 1 von Lauf 3, Anker ergänzt",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "@delta:qwen_r1",
+    "--zieltext",
+    "@ziel:referenz",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 0,
+    "enthaelt": [
+     "ok — anwendbar",
+     "Inhalt gleich dem Zieltext sha256:9da6be7ddd7ee3d6b75aa2aa761a09622fbbe423103621f80714a5db8f96545b"
+    ]
+   }
+  },
+  {
+   "id": "I-04",
+   "beschreibung": "grok-lauf2.json",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "deltas/eingang/grok-lauf2.json",
+    "--zieltext",
+    "@ziel:referenz",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 2,
+    "enthaelt": [
+     "Inhalt weicht vom Zieltext ab",
+     "Zieltext sha256:9da6be7ddd7ee3d6b75aa2aa761a09622fbbe423103621f80714a5db8f96545b",
+     "Ergebnis sha256:bf63f7f5b6af91f4a93f1d2cfd18266fa711f1f22eed0b4e63a844fee09ae235"
+    ],
+    "enthaelt_nicht": [
+     "Zeilenbilanz weicht"
+    ]
+   }
+  },
+  {
+   "id": "I-05",
+   "beschreibung": "qwen-lauf2.json",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "deltas/eingang/qwen-lauf2.json",
+    "--zieltext",
+    "@ziel:referenz",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 2,
+    "enthaelt": [
+     "Inhalt weicht vom Zieltext ab",
+     "Zieltext sha256:9da6be7ddd7ee3d6b75aa2aa761a09622fbbe423103621f80714a5db8f96545b",
+     "Ergebnis sha256:926f7e1a56696f837934753d7a577c74154fd4b58de033a7afe1b1eab1a9f18b"
+    ],
+    "enthaelt_nicht": [
+     "Zeilenbilanz weicht"
+    ]
+   }
+  },
+  {
+   "id": "I-06",
+   "beschreibung": "Gegenfall aus S013",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "@delta:gegenfall",
+    "--zieltext",
+    "@ziel:referenz",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 2,
+    "enthaelt": [
+     "Inhalt weicht vom Zieltext ab",
+     "Zieltext sha256:9da6be7ddd7ee3d6b75aa2aa761a09622fbbe423103621f80714a5db8f96545b",
+     "Ergebnis sha256:0ffe42f31446dc2fab8cffcdff24a92b177c8ed6fa895b40f247a71b4741c8f0",
+     "@@ -1,0 +2 @@",
+     "@@ -44 +44,0 @@",
+     "-  UEBERGABE_PBP-S005_nach_S006.md"
+    ],
+    "enthaelt_nicht": [
+     "Zeilenbilanz weicht"
+    ]
+   }
+  },
+  {
+   "id": "I-07",
+   "beschreibung": "grok-lauf3.json",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "deltas/eingang/grok-lauf3.json",
+    "--zieltext",
+    "@ziel:referenz",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 2,
+    "enthaelt": [
+     "Inhalt weicht vom Zieltext ab",
+     "Zieltext sha256:9da6be7ddd7ee3d6b75aa2aa761a09622fbbe423103621f80714a5db8f96545b",
+     "Ergebnis sha256:1217f83ff267e790c6c108433a4b2ba3c848b7f12cf1a7f097130d0ffc33524e",
+     "Zeilenbilanz weicht von der Deklaration ab"
+    ],
+    "enthaelt_nicht": []
+   }
+  },
+  {
+   "id": "I-08",
+   "beschreibung": "qwen-lauf3.json",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "deltas/eingang/qwen-lauf3.json",
+    "--zieltext",
+    "@ziel:referenz",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 2,
+    "enthaelt": [
+     "Inhalt weicht vom Zieltext ab",
+     "Zieltext sha256:9da6be7ddd7ee3d6b75aa2aa761a09622fbbe423103621f80714a5db8f96545b",
+     "Ergebnis sha256:81621df608aee48c5a1c884c6e49a6a3e2455064226efe0a23c6a3bbebec22c1",
+     "Zeilenbilanz weicht von der Deklaration ab"
+    ],
+    "enthaelt_nicht": []
+   }
+  },
+  {
+   "id": "I-09",
+   "beschreibung": "Grok Runde 1 von Lauf 3, Anker ergänzt",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "@delta:grok_r1",
+    "--zieltext",
+    "@ziel:referenz",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 2,
+    "enthaelt": [
+     "Inhalt weicht vom Zieltext ab",
+     "Zieltext sha256:9da6be7ddd7ee3d6b75aa2aa761a09622fbbe423103621f80714a5db8f96545b",
+     "Ergebnis sha256:bf63f7f5b6af91f4a93f1d2cfd18266fa711f1f22eed0b4e63a844fee09ae235",
+     "Zeilenbilanz weicht von der Deklaration ab"
+    ],
+    "enthaelt_nicht": []
+   }
+  },
+  {
+   "id": "I-10",
+   "beschreibung": "Formvariante: neuer Eintrag mit vier statt zwei Leerzeichen",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "@delta:formvariante",
+    "--zieltext",
+    "@ziel:referenz",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 2,
+    "enthaelt": [
+     "Inhalt weicht vom Zieltext ab",
+     "Zieltext sha256:9da6be7ddd7ee3d6b75aa2aa761a09622fbbe423103621f80714a5db8f96545b",
+     "Ergebnis sha256:657a93928796d9b22150c4f264587a45079beaa0911e5680b94bc36c6941407c",
+     "@@ -45 +45 @@"
+    ],
+    "enthaelt_nicht": [
+     "Zeilenbilanz weicht"
+    ]
+   }
+  },
+  {
+   "id": "I-11",
+   "beschreibung": "Referenz, weder Zieltext noch Schalter",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "@delta:referenz",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 3,
+    "enthaelt": [
+     "--zieltext",
+     "--ohne-inhalt"
+    ]
+   }
+  },
+  {
+   "id": "I-12",
+   "beschreibung": "Gegenfall mit ausdrücklichem Schalter",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "@delta:gegenfall",
+    "--ohne-inhalt",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 0,
+    "enthaelt": [
+     "ok — anwendbar",
+     "ohne Inhaltsprüfung"
+    ]
+   }
+  },
+  {
+   "id": "I-13",
+   "beschreibung": "Zieltext-Datei fehlt",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "@delta:referenz",
+    "--zieltext",
+    "@fehlt",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 3,
+    "enthaelt": [
+     "Zieltext-Datei nicht gefunden"
+    ]
+   }
+  },
+  {
+   "id": "I-14",
+   "beschreibung": "Zieltext-Datei mit Windows-Zeilenenden",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "@delta:referenz",
+    "--zieltext",
+    "@ziel:referenz_crlf",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 3,
+    "enthaelt": [
+     "Windows-Zeilenenden"
+    ]
+   }
+  },
+  {
+   "id": "I-15",
+   "beschreibung": "Zieltext beginnt mit einer anderen Überschrift",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "@delta:referenz",
+    "--zieltext",
+    "@ziel:andere_ueberschrift",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 3,
+    "enthaelt": [
+     "Überschrift"
+    ]
+   }
+  },
+  {
+   "id": "I-16",
+   "beschreibung": "pr-body und render ohne Zieltext und ohne Schalter",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "typ": "folge",
+   "schritte": [
+    {
+     "befehl": [
+      "pr-body",
+      "@delta:referenz",
+      "--repo",
+      "."
+     ],
+     "erwartung": {
+      "exit": 3,
+      "enthaelt": [
+       "--zieltext"
+      ]
+     }
+    },
+    {
+     "befehl": [
+      "render",
+      "@delta:referenz",
+      "--repo",
+      "."
+     ],
+     "erwartung": {
+      "exit": 3,
+      "enthaelt": [
+       "--zieltext"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "I-17",
+   "beschreibung": "ChatGPT Runde 1 von Lauf 3, Anker ergänzt (nachgereicht mit A3)",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "@delta:chatgpt_r1",
+    "--zieltext",
+    "@ziel:referenz",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 2,
+    "enthaelt": [
+     "Inhalt weicht vom Zieltext ab",
+     "Zieltext sha256:9da6be7ddd7ee3d6b75aa2aa761a09622fbbe423103621f80714a5db8f96545b",
+     "Ergebnis sha256:2d6c3f87fed54e07e3c9022fc878239c576b26d8c3b2a0806c20422079ce6aa1",
+     "Zeilenbilanz weicht von der Deklaration ab"
+    ],
+    "enthaelt_nicht": []
+   }
+  },
+  {
+   "id": "W-01",
+   "beschreibung": "check auf eine fehlende Delta-Datei",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "@fehlt",
+    "--zieltext",
+    "@ziel:referenz",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 3,
+    "enthaelt": [
+     "Delta-Datei nicht gefunden"
+    ]
+   }
+  },
+  {
+   "id": "W-02",
+   "beschreibung": "context_hash mit gekipptem letztem Zeichen (grok-lauf2.json)",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "@delta:w02",
+    "--ohne-inhalt",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 2,
+    "enthaelt": [
+     "context_hash veraltet",
+     "deklariert sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f0",
+     "ist sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1"
+    ]
+   }
+  },
+  {
+   "id": "W-03",
+   "typ": "verweis",
+   "beschreibung": "Zielzahl aus der Selbstauskunft — aufgegangen in I-04 und I-05"
+  },
+  {
+   "id": "W-04",
+   "beschreibung": "audit ab 337876f",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "audit",
+    "--repo",
+    ".",
+    "--start",
+    "337876f",
+    "--head",
+    "HEAD"
+   ],
+   "erwartung": {
+    "exit": 2,
+    "enthaelt": [
+     "[OHNE DELTA] 962ea3cb"
+    ],
+    "enthaelt_nicht": [
+     "Branch Protection"
+    ]
+   }
+  },
+  {
+   "id": "W-05",
+   "beschreibung": "hash mit absolutem Pfad, Ausgabe gleich der mit relativem",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "typ": "folge",
+   "schritte": [
+    {
+     "befehl": [
+      "hash",
+      "artefakte/TESTGEGENSTAND_TRANSPORTACHSE_01.md",
+      "--heading",
+      "### 2.1 Schicht-Architektur",
+      "--repo",
+      "."
+     ],
+     "erwartung": {
+      "exit": 0,
+      "enthaelt": [
+       "sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1"
+      ]
+     }
+    },
+    {
+     "befehl": [
+      "hash",
+      "@abs:artefakte/TESTGEGENSTAND_TRANSPORTACHSE_01.md",
+      "--heading",
+      "### 2.1 Schicht-Architektur",
+      "--repo",
+      "."
+     ],
+     "erwartung": {
+      "exit": 0,
+      "enthaelt": [
+       "sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1"
+      ]
+     }
+    }
+   ],
+   "gleich": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  {
+   "id": "W-06",
+   "beschreibung": "check auf chatgpt-lauf3.json (kein gültiges JSON)",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "deltas/eingang/chatgpt-lauf3.json",
+    "--zieltext",
+    "@ziel:referenz",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 2,
+    "enthaelt": [
+     "kein gültiges JSON"
+    ]
+   }
+  },
+  {
+   "id": "W-07",
+   "beschreibung": "replace_section mit einer Liste als payload",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "@delta:w07",
+    "--ohne-inhalt",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 2,
+    "enthaelt": [
+     "payload leer oder kein Text"
+    ]
+   }
+  },
+  {
+   "id": "W-08",
+   "beschreibung": "audit, unter deltas/ liegt gültiges JSON mit falscher Struktur",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "audit",
+    "--repo",
+    ".",
+    "--start",
+    "4efdce9eec95ea82bd57e485e15e67aa608c89a0",
+    "--head",
+    "HEAD"
+   ],
+   "erwartung": {
+    "exit": 0,
+    "enthaelt": [
+     "übersprungen (kein JSON-Objekt)",
+     "kaputt.json",
+     "Commits auf Artefakten: 0 "
+    ]
+   },
+   "vorbereitung": [
+    {
+     "aktion": "schreibe",
+     "pfad": "deltas/eingang/kaputt.json",
+     "inhalt": "[1, 2, 3]\n"
+    }
+   ]
+  },
+  {
+   "id": "W-09",
+   "beschreibung": "check auf eine Zieldatei mit Windows-Zeilenenden",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "@delta:referenz",
+    "--zieltext",
+    "@ziel:referenz",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 2,
+    "enthaelt": [
+     "Windows-Zeilenenden"
+    ]
+   },
+   "vorbereitung": [
+    {
+     "aktion": "crlf",
+     "pfad": "artefakte/TESTGEGENSTAND_TRANSPORTACHSE_01.md"
+    }
+   ]
+  },
+  {
+   "id": "W-10",
+   "beschreibung": "verify, nachdem die Zieldatei von CRLF auf LF umgeschrieben wurde",
+   "typ": "synthetisch",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "datei": "artefakte/TESTGEGENSTAND_TRANSPORTACHSE_01.md",
+   "delta": "referenz",
+   "befehl": [
+    "verify",
+    "delta.json",
+    "--repo",
+    ".",
+    "--head",
+    "HEAD"
+   ],
+   "erwartung": {
+    "exit": 2,
+    "enthaelt": [
+     "Windows-Zeilenenden"
+    ],
+    "enthaelt_nicht": [
+     "byte-identisch"
+    ]
+   }
+  },
+  {
+   "id": "W-11",
+   "beschreibung": "pr-body vor und nach render --write, vor dem Commit",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "typ": "folge",
+   "schritte": [
+    {
+     "befehl": [
+      "pr-body",
+      "@delta:referenz",
+      "--zieltext",
+      "@ziel:referenz",
+      "--repo",
+      "."
+     ],
+     "erwartung": {
+      "exit": 0,
+      "enthaelt": [
+       "## KONTROLLFALL-S014-REFERENZ"
+      ]
+     }
+    },
+    {
+     "befehl": [
+      "render",
+      "@delta:referenz",
+      "--zieltext",
+      "@ziel:referenz",
+      "--repo",
+      ".",
+      "--write"
+     ],
+     "erwartung": {
+      "exit": 0,
+      "enthaelt": [
+       "geschrieben"
+      ]
+     }
+    },
+    {
+     "befehl": [
+      "pr-body",
+      "@delta:referenz",
+      "--zieltext",
+      "@ziel:referenz",
+      "--repo",
+      "."
+     ],
+     "erwartung": {
+      "exit": 0,
+      "enthaelt": [
+       "## KONTROLLFALL-S014-REFERENZ"
+      ]
+     }
+    }
+   ],
+   "gleich": [
+    [
+     0,
+     2
+    ]
+   ]
+  },
+  {
+   "id": "W-12",
+   "typ": "intern",
+   "anzahl": 7,
+   "beschreibung": "Dateikopf nennt alle Subkommandos, gleich der Liste in argparse"
+  },
+  {
+   "id": "R-01",
+   "beschreibung": "hash auf §2.1 am festen Stand",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "hash",
+    "artefakte/TESTGEGENSTAND_TRANSPORTACHSE_01.md",
+    "--heading",
+    "### 2.1 Schicht-Architektur",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 0,
+    "enthaelt": [
+     "context_hash  : sha256:f34a74a4fcb5d59eaf1988087b10da0404b4b0c4610742f1df719ae5c78de8f1",
+     "expected_lines.before: 53"
+    ]
+   }
+  },
+  {
+   "id": "R-02",
+   "beschreibung": "audit ab 4efdce9 bis zum festen Stand",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "audit",
+    "--repo",
+    ".",
+    "--start",
+    "4efdce9eec95ea82bd57e485e15e67aa608c89a0",
+    "--head",
+    "HEAD"
+   ],
+   "erwartung": {
+    "exit": 0,
+    "enthaelt": [
+     "Commits auf Artefakten: 0 "
+    ]
+   }
+  },
+  {
+   "id": "R-03",
+   "beschreibung": "qwen2.json (Lauf 1b) nach dem Merge, ohne Inhaltsprüfung",
+   "stand": "337876fbbda00e835e94911f0e1f302e7d8338d2",
+   "befehl": [
+    "check",
+    "deltas/eingang/qwen2.json",
+    "--ohne-inhalt",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 2,
+    "enthaelt": [
+     "context_hash veraltet",
+     "Datei seit base_sha f2694fd6 veraendert"
+    ]
+   }
+  },
+  {
+   "id": "R-04",
+   "beschreibung": "verify qwen2.json --head 337876f",
+   "stand": "337876fbbda00e835e94911f0e1f302e7d8338d2",
+   "befehl": [
+    "verify",
+    "deltas/eingang/qwen2.json",
+    "--repo",
+    ".",
+    "--head",
+    "337876f"
+   ],
+   "erwartung": {
+    "exit": 0,
+    "enthaelt": [
+     "byte-identisch"
+    ]
+   }
+  },
+  {
+   "id": "R-05",
+   "beschreibung": "verify grok-lauf2.json --head db543e3",
+   "stand": "db543e332474bb4ccd24ad0ee9e231218e42e3e1",
+   "befehl": [
+    "verify",
+    "deltas/eingang/grok-lauf2.json",
+    "--repo",
+    ".",
+    "--head",
+    "db543e3"
+   ],
+   "erwartung": {
+    "exit": 0,
+    "enthaelt": [
+     "byte-identisch"
+    ]
+   }
+  },
+  {
+   "id": "R-06",
+   "typ": "verweis",
+   "beschreibung": "Leseseite: Fence-Schutz, Mehrdeutig, Unbekannt, Teilanker — s. oben, R-06 Leseseite"
+  },
+  {
+   "id": "R-07",
+   "beschreibung": "replace_lines: old kommt mehrfach vor",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "@delta:r07",
+    "--ohne-inhalt",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 2,
+    "enthaelt": [
+     "mehrdeutig"
+    ]
+   }
+  },
+  {
+   "id": "R-08",
+   "beschreibung": "replace_lines: zwei Einträge überlappen",
+   "stand": "8f3bc362a368e6f96becc65d21f52af97f262572",
+   "befehl": [
+    "check",
+    "@delta:r08",
+    "--ohne-inhalt",
+    "--repo",
+    "."
+   ],
+   "erwartung": {
+    "exit": 2,
+    "enthaelt": [
+     "ueberlappen"
+    ]
+   }
+  }
+ ]
+}
